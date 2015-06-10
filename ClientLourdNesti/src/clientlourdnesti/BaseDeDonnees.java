@@ -16,95 +16,146 @@ import java.sql.SQLException;
  * @author stagiaire
  */
 public class BaseDeDonnees {
-    Connection cn = null;
-    Statement st = null;
-            
-    public void connecte(){
-        try {
-            //Chargement du driver
-            Class.forName("com.mysql.jdbc.Driver");
+    Connexion connexion;
     
-        //Connection à la base de données
-        String url = "jdbc:mysql://localhost/evaluationingredient";
-        String login = "root";
-        String motdepasse = "";
-        
-        //Récupération de la connexion
-        cn = DriverManager.getConnection(url, login, motdepasse);
-        }
-        catch(SQLException e){
-            e.printStackTrace();
-        }
-        catch(ClassNotFoundException e){
-            e.printStackTrace();
-        }
-    }   
-
-    public void deconnecte(){
-        try{
-            //fermeture de la connexion à la base
-            cn.close();  
-        }
-        catch(SQLException e){
-            e.printStackTrace();
-        }
+    BaseDeDonnees(){
+        connexion = new Connexion();
+        connexion.connecte();
+    }
+    public void finRequeteBdd(){
+        connexion.finRequete();
     }
     
-    public ResultSet envoiRequete(String texte){
-        ResultSet resultat = null;
-        
-        try{
-            //Création d'un statement pour passer une requête
-            st = cn.createStatement();
-            
-            //execution de la requête
-            st.executeQuery(texte);
-            resultat = st.getResultSet();
-        }
-        catch(SQLException e){
-            e.printStackTrace();
-        } 
-        return resultat;
+    //Sert à fermer automatiquement la connexion sans appel nécessaire
+    public void finalize(){
+        connexion.deconnecte();
     }
-    
-    public void finRequete(){
-         try{
-             st.close();
-         }
-         catch(SQLException e){
-            e.printStackTrace();
-        }
-    }
-    
-    /*public String getDonneeEchantillon(){
-        //String sql = "SELECT 'donnee' FROM 'table' WHERE 'id' = 'valeur'";
-        String sql = "SELECT nom FROM echantillon WHERE idEchantillon = 1";
-        
-        //Envoi et exécution de la requête
-        ResultSet resSet = envoiRequete(sql);
-        
-        String retour = null;
-        try{
-            //récupération de la première ligne du tableau
-            resSet.next();
-            retour = resSet.getString("nom");
-        }
-        catch(SQLException e){
-            e.printStackTrace();
-        }
-
-        return retour;
-    }*/
     
     public ResultSet getListe(String table){
-        String sql = "SELECT * FROM "+table+"";
+        String sql = "SELECT * FROM "+table;
         
         //Envoi et exécution de la requête
-        ResultSet resSet = envoiRequete(sql);
+        ResultSet resSet = connexion.envoiRequete(sql);
 
         return resSet;
     }
+    
+    public ResultSet getLigneTest(int id){
+        String sql = "SELECT * FROM test WHERE idTest = "+id;
+        
+        //Envoi et exécution de la requête
+        ResultSet resSet = connexion.envoiRequete(sql);
+        
+        return resSet;
+    }
+    
+    public ResultSet getLigneEchantillon(int id){
+        String sql = "SELECT * FROM echantillon WHERE idEchantillon = "+id;
+        
+        //Envoi et exécution de la requête
+        ResultSet resSet = connexion.envoiRequete(sql);
+        
+        return resSet;
+    }
+            
+    public ResultSet getLigneSalle(int id){
+        String sql = "SELECT * FROM salle WHERE idSalle = "+id;
+        
+        //Envoi et exécution de la requête
+        ResultSet resSet = connexion.envoiRequete(sql);
+        
+        return resSet;
+    }
+    
+    public ResultSet getLigneOrganisateur(int id){
+        String sql = "SELECT * FROM organisateur WHERE idOrganisateur = "+id;
+        
+        //Envoi et exécution de la requête
+        ResultSet resSet = connexion.envoiRequete(sql);
+        
+        return resSet;
+    }
+    
+    public ResultSet getLigneDegustateur(int id){
+        String sql = "SELECT * FROM degustateur WHERE idDegustateur = "+id;
+        
+        //Envoi et exécution de la requête
+        ResultSet resSet = connexion.envoiRequete(sql);
+        
+        return resSet;
+    }
+    
+    public ResultSet getligneDegustateurParticipeTest(int id){
+        String sql = "SELECT * FROM degustateur, participe "
+        + "WHERE idDegustateur = Degustateur_idDegustateur and Test_idTest = "+id;
+        
+        //Envoi et exécution de la requête
+        ResultSet resSet = connexion.envoiRequete(sql);
+        
+        return resSet;
+    }
+    
+    public ResultSet getNotesTest(int id){
+        String sql = "SELECT note.Aspect, note.Gout, note.Odeur, note.Texture " +
+                    "FROM note " +
+                    "INNER JOIN test " +
+                    "WHERE note.Echantillon_idEchantillon = test.Echantillon_idEchantillon " +
+                    "AND idTest = "+id;
+        
+        //Envoi et exécution de la requête
+        ResultSet resSet = connexion.envoiRequete(sql);
+        
+        return resSet;
+    }
+    
+    public ResultSet getTest(){
+        String sql = "SELECT * FROM test";
+        
+        //Envoi et exécution de la requête
+        ResultSet resSet = connexion.envoiRequete(sql);
+        
+        return resSet;
+    }
+    
+    public ResultSet getLigneTestEchantillon(int id){
+        String sql = "SELECT * FROM test WHERE Echantillon_idEchantillon = "+id;
+        
+        //Envoi et exécution de la requête
+        ResultSet resSet = connexion.envoiRequete(sql);
+        
+        return resSet;
+    }
+    
+    public ResultSet getLigneTestDegustateur(int id){
+        String sql = "SELECT test.idTest, test.Nom FROM test, participe "
+                + "WHERE Test_idTest = idTest AND Degustateur_idDegustateur = "+id;
+        
+        //Envoi et exécution de la requête
+        ResultSet resSet = connexion.envoiRequete(sql);
+        
+        return resSet;
+    }
+    
+    public ResultSet getLigneTestOrganisateur(int id){
+        String sql = "SELECT * FROM test WHERE Organisateur_idOrganisateur = "+id;
+        
+        //Envoi et exécution de la requête
+        ResultSet resSet = connexion.envoiRequete(sql);
+        
+        return resSet;
+    }
+    
+    public ResultSet getLigneTestSalle(int id){
+        String sql = "SELECT * FROM test WHERE Salle_idSalle = "+id;
+        
+        //Envoi et exécution de la requête
+        ResultSet resSet = connexion.envoiRequete(sql);
+        
+        return resSet;
+    }
 }
+
+    
 
 // pas de réel programme au début et pas respecté
 // points techniques importants POO traités en 1 semaine mais plus d'1 mois sur html

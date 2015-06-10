@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Client :  127.0.0.1
--- Généré le :  Mer 03 Juin 2015 à 14:13
+-- Généré le :  Jeu 04 Juin 2015 à 15:15
 -- Version du serveur :  5.6.15-log
 -- Version de PHP :  5.5.8
 
@@ -33,15 +33,19 @@ CREATE TABLE IF NOT EXISTS `degustateur` (
   `Adresse` varchar(100) NOT NULL,
   `Telephone` varchar(45) NOT NULL,
   PRIMARY KEY (`idDegustateur`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=3 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=7 ;
 
 --
 -- Contenu de la table `degustateur`
 --
 
 INSERT INTO `degustateur` (`idDegustateur`, `Nom`, `Prenom`, `Adresse`, `Telephone`) VALUES
-(1, 'Batigne', 'Romain', '5 rue du bleu mouton 34000 Montpellier', '03 26 15 48 89'),
-(2, 'Langlois', 'Fabien', '9 rue des multipliants 34000 Montpellier', '03 12 45 78 89');
+(1, 'Batigne', 'Romain', '5 rue du bleu mouton 34000 Montpellier', '04 26 15 48 89'),
+(2, 'Langlois', 'Fabien', '9 rue des multipliants 34000 Montpellier', '04 12 45 78 89'),
+(3, 'Dumuzois', 'Elyse', '21 rue  de Reims 34000 Montpellier', '04 05 14 25 36'),
+(4, 'Hubert', 'Mathilde', '46 rue des Cerisiers 34000 Montpellier', '04 58 69 78 65'),
+(5, 'Martin', 'Anne', '9 rue des platanes 34000 Montpellier', '04 33 65 89 78'),
+(6, 'Dupont', 'Pierre', '13 rue de la brique 34000 Montpellier', '04 01 25 36 47');
 
 -- --------------------------------------------------------
 
@@ -55,7 +59,7 @@ CREATE TABLE IF NOT EXISTS `echantillon` (
   `Marque` varchar(45) NOT NULL,
   `Quantite` int(10) unsigned NOT NULL,
   PRIMARY KEY (`idEchantillon`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=3 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=7 ;
 
 --
 -- Contenu de la table `echantillon`
@@ -63,7 +67,11 @@ CREATE TABLE IF NOT EXISTS `echantillon` (
 
 INSERT INTO `echantillon` (`idEchantillon`, `Nom`, `Marque`, `Quantite`) VALUES
 (1, 'ChocolatNoir', 'Cote d''Os', 10),
-(2, 'Chocolat blanc', 'Mont bleu', 5);
+(2, 'Chocolat blanc', 'Mont bleu', 5),
+(3, 'Café', 'Grand maman', 0),
+(4, 'thé vert', 'Détonne', 0),
+(5, 'glace à la fraise', 'Magnone', 0),
+(6, 'Biscuit', 'LUI', 0);
 
 -- --------------------------------------------------------
 
@@ -104,14 +112,19 @@ CREATE TABLE IF NOT EXISTS `organisateur` (
   `Adresse` varchar(100) NOT NULL,
   `Telephone` varchar(45) NOT NULL,
   PRIMARY KEY (`idOrganisateur`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=2 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=7 ;
 
 --
 -- Contenu de la table `organisateur`
 --
 
 INSERT INTO `organisateur` (`idOrganisateur`, `Nom`, `Prenom`, `Adresse`, `Telephone`) VALUES
-(1, 'Chatton', 'Marina', '13 rue des chats bossus 59000 Lille', '03 23 56 89 78');
+(1, 'Chatton', 'Marina', '13 rue des chats bossus 59000 Montpellier', '04 23 56 89 78'),
+(2, 'Dupond', 'Jean', '21 rue de la garenne 34000 Montpellier', '04 01 36 14 69'),
+(3, 'Durost', 'Martine', '52 rue des trois épées 34000 Montpellier', '04 78 89 52 63'),
+(4, 'Delmas', 'Sophie', '25 boulevard du temps qui passe 34000 Montpellier', '04 89 56 12 45'),
+(5, 'DeFrance', 'Marianne', '21 avenue de l''eau qui dort 34000 Montpellier', '04 32 98 78 54'),
+(6, 'Dujardin', 'André', '14 rue de la pierre sèche 34000 Montpellier', '04 85 52 36 96');
 
 -- --------------------------------------------------------
 
@@ -145,18 +158,22 @@ CREATE TABLE IF NOT EXISTS `salle` (
   `idSalle` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `Numero` varchar(45) NOT NULL,
   `Batiment` varchar(45) NOT NULL,
-  `DateOccupation` datetime NOT NULL,
+  `DateOccupation` date NOT NULL,
   `CapaciteAccueil` int(10) unsigned NOT NULL,
   PRIMARY KEY (`idSalle`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=3 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=7 ;
 
 --
 -- Contenu de la table `salle`
 --
 
 INSERT INTO `salle` (`idSalle`, `Numero`, `Batiment`, `DateOccupation`, `CapaciteAccueil`) VALUES
-(1, '1', 'Cintra', '2015-06-10 00:00:00', 5),
-(2, '2', 'Skellidge', '2015-05-18 00:00:00', 10);
+(1, '42', 'Pomme', '2015-06-10', 5),
+(2, '404', 'Raisin', '2015-05-18', 10),
+(3, '500', 'Fraise', '2015-06-01', 8),
+(4, '403', 'Groseille', '2015-06-16', 6),
+(5, '31', 'Fraise', '2015-06-19', 10),
+(6, '13', 'Pomme', '2015-06-27', 6);
 
 -- --------------------------------------------------------
 
@@ -167,7 +184,7 @@ INSERT INTO `salle` (`idSalle`, `Numero`, `Batiment`, `DateOccupation`, `Capacit
 CREATE TABLE IF NOT EXISTS `test` (
   `idTest` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `Nom` varchar(45) NOT NULL,
-  `DateTest` datetime NOT NULL,
+  `DateTest` date NOT NULL,
   `Echantillon_idEchantillon` int(10) unsigned NOT NULL,
   `Salle_idSalle` int(10) unsigned NOT NULL,
   `Organisateur_idOrganisateur` int(10) unsigned NOT NULL,
@@ -182,7 +199,7 @@ CREATE TABLE IF NOT EXISTS `test` (
 --
 
 INSERT INTO `test` (`idTest`, `Nom`, `DateTest`, `Echantillon_idEchantillon`, `Salle_idSalle`, `Organisateur_idOrganisateur`) VALUES
-(1, 'TestChocolatNoir', '2015-05-12 00:00:00', 1, 1, 1);
+(1, 'TestChocolatNoir', '2015-05-12', 1, 1, 1);
 
 --
 -- Contraintes pour les tables exportées

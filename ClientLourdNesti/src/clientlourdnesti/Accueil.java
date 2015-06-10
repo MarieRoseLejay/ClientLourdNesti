@@ -3,9 +3,14 @@ package clientlourdnesti;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListModel;
 import javax.swing.JList;
-
+import javax.swing.DefaultListSelectionModel;
+import javax.swing.JComboBox;
+import static javax.swing.ListSelectionModel.SINGLE_SELECTION;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 /*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
@@ -18,7 +23,6 @@ import javax.swing.JList;
  */
 public class Accueil extends javax.swing.JFrame {
     BaseDeDonnees bdd;
-
     /**
      * @param args the command line arguments
      */
@@ -33,132 +37,528 @@ public class Accueil extends javax.swing.JFrame {
     public void accueil(){
         initComponents();
         
-        // Connexion à la base
+        //Appel des données de la base
         bdd = new BaseDeDonnees();
-        bdd.connecte();
-        
+
         //Récupération de la liste
         ResultSet rsTest = bdd.getListe("Test");
         //Affichage dans la fenêtre Test
         JListTest(rsTest);
         // Fermeture de la requête
-        bdd.finRequete();
+        bdd.finRequeteBdd();
         
         //liste Ingredient
-        ResultSet rsIngredient = bdd.getListe("Echantillon");
-        JListIngredient(rsIngredient);
-        bdd.finRequete();
+        ResultSet rsEchantillon = bdd.getListe("Echantillon");
+        JListEchantillon(rsEchantillon);
+        bdd.finRequeteBdd();
         
         //liste Degustateur
         ResultSet rsDegustateur = bdd.getListe("Degustateur");
         JListDegustateur(rsDegustateur);
-        bdd.finRequete();
+        bdd.finRequeteBdd();
 
         //liste Organisateur        
         ResultSet rsOrganisateur = bdd.getListe("Organisateur");
         JListOrganisateur(rsOrganisateur);
-        bdd.finRequete();
+        bdd.finRequeteBdd();
         
         //liste Salle
         ResultSet rsSalle = bdd.getListe("Salle");
         JListSalle(rsSalle);
-        bdd.finRequete();
+        bdd.finRequeteBdd();
         
         setTitle("Menu");
         setVisible(true);
+    }
+    
+    class NomEtId
+    {
+        String nom;
+        int id;
         
-        // Fermeture de la connexion
-        bdd.deconnecte();
+        //surcharge de toString de l'objet pour avoir le "nom" à la place de "type+appel mémoire"
+        //prend effet quand la Jlist appel toString pour l'affichage
+        public String toString()
+        {
+            return nom;     
+        }
+    }
+    
+    class Identite
+    {
+        String nom;
+        String prenom;
+        int id;
+        
+        //surcharge de toString de l'objet pour avoir l'identité complète "nom + prenom" à la place de "type+appel mémoire"
+        //prend effet quand la Jlist appel toString pour l'affichage
+        public String toString()
+        {
+            return nom +" "+ prenom;     
+        }
     }
     
     public void JListTest(ResultSet rs){
+        //Remplisage de la liste
         DefaultListModel modelTest = new DefaultListModel();
         
-        //variable pour stocker le résultat
-        String ligne; 
         try{
+            //Tant qu'il y a une ligne suivante
             while(rs.next()){
-                //récupération pour chaque ligne du champ nom du tableau                
-                ligne = rs.getString("nom");
-                modelTest.addElement(ligne);
+                NomEtId nomEtId = new NomEtId();
+                //récupération pour chaque ligne du champ nom du tableau et de l'id correspondant
+                nomEtId.nom = rs.getString("Nom");
+                nomEtId.id = rs.getInt("idTest");
+                                
+                modelTest.addElement(nomEtId);
             }
         }
         catch(SQLException e){
             e.printStackTrace();
         }
         listeTest.setModel(modelTest);
+        
+        //Remplissage des champs voisins à la liste
+        //Création d'un listener pour pouvoir récupérer l'évènement
+        ListSelectionListener listener = new ListSelectionListener() {
+
+            @Override
+            //Besoin de valueChanged pour modifier l'évènement
+            public void valueChanged(ListSelectionEvent e) {
+                NomEtId nei = (NomEtId) listeTest.getSelectedValue();
+                //récupération de l'id correspondant au nom du test
+                int idTest = nei.id;
+                
+                //Récupération de la ligne correspondante à ce test dans la table
+                bdd = new BaseDeDonnees();
+                ResultSet ligneTest = bdd.getLigneTest(idTest);
+                
+                
+                //Récupération des informations qu'on souhaite afficher
+                String nom = "";
+                String date = "";
+                
+                int idEchantillon = 0;
+                ResultSet ligneEchantillon;
+                String nomEchantillon = "";
+                
+                int idOrganisateur = 0;
+                ResultSet ligneOrganisateur;
+                String nomOrganisateur = "";
+                
+                int idSalle = 0;
+                ResultSet ligneSalle;
+                String nomSalle = "";
+                
+                int idDegustateur = 0;
+                ResultSet ligneDegustateur;
+                String identiteDegustateur = "";
+                ResultSet ligneDegustateurParticipeTest = bdd.getligneDegustateurParticipeTest(idTest);
+                DefaultListModel modelTestD = new DefaultListModel();
+                
+                float aspect = 0;
+                float gout = 0;
+                float odeur = 0;
+                float texture = 0;
+                float syntheseN = 0;
+                ResultSet listeNotes;
+                
+                String resultat = "";
+                
+                try{
+                    //Accès à la ligne de la table
+                    ligneTest.next();
+                    nom = ligneTest.getString("Nom");
+                    date = ligneTest.getString("DateTest");
+                    
+                    idEchantillon = ligneTest.getInt("Echantillon_idEchantillon");
+                    ligneEchantillon = bdd.getLigneEchantillon(idEchantillon);
+                    ligneEchantillon.next();
+                    nomEchantillon = ligneEchantillon.getString("Nom") +" "+ ligneEchantillon.getString("Marque");
+                    
+                    idOrganisateur = ligneTest.getInt("Organisateur_idOrganisateur");        
+                    ligneOrganisateur = bdd.getLigneOrganisateur(idOrganisateur);
+                    ligneOrganisateur.next();
+                    nomOrganisateur = ligneOrganisateur.getString("Prenom") +" "+ ligneOrganisateur.getString("Nom");
+                    
+                    idSalle = ligneTest.getInt("Salle_idSalle");   
+                    ligneSalle = bdd.getLigneSalle(idSalle);
+                    ligneSalle.next();
+                    nomSalle = ligneSalle.getString("Numero");
+                    
+                    //tant qu'un dégustateur est associé au test
+                    while(ligneDegustateurParticipeTest.next()){
+                        //on récupère son id
+                        idDegustateur = ligneDegustateurParticipeTest.getInt("idDegustateur");
+                        
+                        //on récupère la ligne correspondante dans la table Degustateur
+                        ligneDegustateur = bdd.getLigneDegustateur(idDegustateur);
+                        ligneDegustateur.next();
+                        identiteDegustateur = ligneDegustateur.getString("Prenom") +" "+ ligneDegustateur.getString("Nom");
+
+                        modelTestD.addElement(identiteDegustateur);
+                    }
+                    
+                    listeNotes = bdd.getNotesTest(idTest);
+                    int nombreLignes = 0;
+                                        
+                    while(listeNotes.next()){
+                        aspect = (aspect + listeNotes.getFloat("Aspect"));
+                        gout = gout + listeNotes.getFloat("Gout");
+                        odeur = odeur + listeNotes.getFloat("Odeur");
+                        texture = texture + listeNotes.getFloat("Texture");
+                        nombreLignes += 1;
+                    }
+                    aspect = aspect/nombreLignes;
+                    gout = gout/nombreLignes;
+                    odeur = odeur/nombreLignes;
+                    texture = texture/nombreLignes;
+                    syntheseN =(aspect + gout + odeur + texture)/4;
+                    
+                    if(syntheseN >= 2.5){
+                        resultat = "Article conservé";
+                    }
+                    else{
+                        resultat = "Article rejeté";
+                    }
+                }
+                catch(SQLException ex){
+                    ex.printStackTrace();
+                }
+                //Affichage des informations
+                testSelectionne.setText(nom);
+                dateTest.setText(date);
+                echantillonTest.setText(nomEchantillon);
+                organisateurTest.setText(nomOrganisateur);
+                salleTest.setText(nomSalle);
+                listeDegustateursTest.setModel(modelTestD);
+                syntheseNotes.setText(String.valueOf(syntheseN));
+                resultatTest.setText(resultat);
+            }
+        };
+        listeTest.addListSelectionListener(listener);
     }
-    
-    public void JListIngredient(ResultSet rs){
-        DefaultListModel modelIngredients = new DefaultListModel();
+ 
+    public void JListEchantillon(ResultSet rs){
+        DefaultListModel modelEchantillons = new DefaultListModel();
         
         //variable pour stocker le résultat
-        String ligne; 
         try{
             while(rs.next()){
+                NomEtId nomEtId = new NomEtId();
                 //récupération pour chaque ligne du champ nom du tableau                
-                ligne = rs.getString("nom");
-                modelIngredients.addElement(ligne);
+                nomEtId.nom = rs.getString("Nom");
+                nomEtId.id = rs.getInt("idEchantillon");
+                
+                modelEchantillons.addElement(nomEtId);
             }
         }
         catch(SQLException e){
             e.printStackTrace();
         }
-        listeIngredient.setModel(modelIngredients);
+        listeEchantillon.setModel(modelEchantillons);
+        
+        //Remplissage des champs voisins à la liste
+        //Création d'un listener pour pouvoir récupérer l'évènement
+        ListSelectionListener listener = new ListSelectionListener(){
+            @Override
+            //Besoin de valueChanged pour modifier l'évènement
+            public void valueChanged(ListSelectionEvent e) {
+                NomEtId nei = (NomEtId) listeEchantillon.getSelectedValue();
+                
+                //récupération de l'id correspondant au nom de l'échantillon
+                int idEchantillon = nei.id;
+                
+                //Récupération de la ligne correspondante à ce test dans la table
+                bdd = new BaseDeDonnees();
+                ResultSet ligneEchantillon = bdd.getLigneEchantillon(idEchantillon);
+                
+                String echantillon = "";
+                String marque = "";
+                int quantite = 0;
+                
+                ResultSet listeTest;
+                ResultSet ligneTestSelectionne;
+                String TestSelectionne = "";
+                String nomTest = "";
+                DefaultComboBoxModel comboModel = new DefaultComboBoxModel();
+                
+                try{
+                    //Accès à la ligne de la table
+                    ligneEchantillon.next();
+                    echantillon = ligneEchantillon.getString("Nom") +" "+ ligneEchantillon.getString("Marque");
+                    marque = ligneEchantillon.getString("Marque");
+                    quantite = ligneEchantillon.getInt("Quantite");
+                    
+                    //récupération  de la table test pour remplir la combobox
+                    listeTest = bdd.getTest();
+                    while(listeTest.next()){
+                        nomTest = listeTest.getString("Nom");
+                        comboModel.addElement(nomTest);
+                    }
+                    //Si un échantillon est déjà associé à un test, le sélectionner dans la combobox
+                    ligneTestSelectionne = bdd.getLigneTestEchantillon(idEchantillon);
+                    ligneTestSelectionne.next();
+                    TestSelectionne = ligneTestSelectionne.getString("Nom");
+                    comboModel.setSelectedItem(TestSelectionne);
+                }
+                catch(SQLException ex){
+                    ex.printStackTrace();
+                }
+                echantillonSelectionne.setText(echantillon);
+                marqueEchantillon.setText(marque);
+                quantiteEchantillon.setText(String.valueOf(quantite));
+                testAssocieEchantillon.setModel(comboModel);
+            }
+        };
+        listeEchantillon.addListSelectionListener(listener);
     }
-
+    
     public void JListDegustateur(ResultSet rs){
         DefaultListModel modelDegustateur = new DefaultListModel();
         
         //variable pour stocker le résultat
-        String ligne; 
         try{
             while(rs.next()){
-                //récupération pour chaque ligne du champ nom du tableau                
-                ligne = rs.getString("nom");
-                modelDegustateur.addElement(ligne);
+                Identite identite = new Identite();
+                //récupération pour chaque des champs nom et prenom du tableau et de l'id correspondant              
+                identite.nom = rs.getString("Nom");
+                identite.prenom = rs.getString("Prenom");
+                identite.id = rs.getInt("idDegustateur");
+               
+                modelDegustateur.addElement(identite);
             }
         }
         catch(SQLException e){
             e.printStackTrace();
         }
         listeDegustateur.setModel(modelDegustateur);
+        
+        //Remplissage des champs voisins à la liste
+        //Création d'un listener pour pouvoir récupérer l'évènement
+        ListSelectionListener listener = new ListSelectionListener(){
+            @Override
+            //Besoin de valueChanged pour modifier l'évènement
+            public void valueChanged(ListSelectionEvent e){
+            Identite ident = (Identite) listeDegustateur.getSelectedValue();
+                
+                //récupération de l'id correspondant au nom de l'échantillon
+                int idDegustateur = ident.id;
+                
+                //Récupération de la ligne correspondante à ce test dans la table
+                bdd = new BaseDeDonnees();
+                ResultSet ligneDegustateur = bdd.getLigneDegustateur(idDegustateur);
+                
+                String identite = "";
+                String nom = "";
+                String prenom = "";
+                String adresse = "";
+                String telephone = "";
+                
+                ResultSet listeTest;
+                ResultSet ligneTestSelectionne;
+                String TestSelectionne = "";
+                String nomTest = "";
+                DefaultComboBoxModel comboModel = new DefaultComboBoxModel();
+                
+                try{
+                    //Accès à la ligne de la table
+                    ligneDegustateur.next();
+                    identite = ligneDegustateur.getString("Prenom") +" "+ ligneDegustateur.getString("Nom");
+                    nom = ligneDegustateur.getString("Nom");
+                    prenom = ligneDegustateur.getString("Prenom");
+                    adresse = ligneDegustateur.getString("Adresse");
+                    telephone =  ligneDegustateur.getString("Telephone");
+                    
+                    //récupération  de la table test pour remplir la combobox
+                    listeTest = bdd.getTest();
+                    while(listeTest.next()){
+                        nomTest = listeTest.getString("Nom");
+                        comboModel.addElement(nomTest);
+                    }
+                    //Si un échantillon est déjà associé à un test, le sélectionner dans la combobox
+                    ligneTestSelectionne = bdd.getLigneTestDegustateur(idDegustateur);
+                    while(ligneTestSelectionne.next()){
+                        TestSelectionne = ligneTestSelectionne.getString("Nom");
+                        comboModel.setSelectedItem(TestSelectionne);
+                    }
+                }
+                catch(SQLException ex){
+                    ex.printStackTrace();
+                }
+                degustateurSelectionne.setText(identite);
+                nomDegustateur.setText(nom);
+                prenomDegustateur.setText(prenom);
+                adresseDegustateur.setText(adresse);
+                telephoneDegustateur.setText(telephone);
+                testAssocieDegustateur.setModel(comboModel);
+            }
+        };
+        listeDegustateur.addListSelectionListener(listener);
     }
     
     public void JListOrganisateur(ResultSet rs){
         DefaultListModel modelOrganisateur = new DefaultListModel();
         
         //variable pour stocker le résultat
-        String ligne; 
         try{
             while(rs.next()){
-                //récupération pour chaque ligne du champ nom du tableau                
-                ligne = rs.getString("nom");
-                modelOrganisateur.addElement(ligne);
+                Identite identite = new Identite();
+                //récupération pour chaque des champs nom et prenom du tableau et de l'id correspondant              
+                identite.nom = rs.getString("Nom");
+                identite.prenom = rs.getString("Prenom");
+                identite.id = rs.getInt("idOrganisateur");
+                
+                modelOrganisateur.addElement(identite);
             }
         }
         catch(SQLException e){
             e.printStackTrace();
         }
         listeOrganisateur.setModel(modelOrganisateur);
+        
+        //Remplissage des champs voisins à la liste
+        //Création d'un listener pour pouvoir récupérer l'évènement
+        ListSelectionListener listener = new ListSelectionListener(){
+            @Override
+            //Besoin de valueChanged pour modifier l'évènement
+            public void valueChanged(ListSelectionEvent e){
+            Identite ident = (Identite) listeOrganisateur.getSelectedValue();
+                
+                //récupération de l'id correspondant au nom de l'échantillon
+                int idOrganisateur = ident.id;
+                
+                //Récupération de la ligne correspondante à ce test dans la table
+                bdd = new BaseDeDonnees();
+                ResultSet ligneOrganisateur = bdd.getLigneOrganisateur(idOrganisateur);
+                
+                String identite = "";
+                String nom = "";
+                String prenom = "";
+                String adresse = "";
+                String telephone = "";
+                
+                ResultSet listeTest;
+                ResultSet ligneTestSelectionne;
+                String TestSelectionne = "";
+                String nomTest = "";
+                DefaultComboBoxModel comboModel = new DefaultComboBoxModel();
+                
+                try{
+                    //Accès à la ligne de la table
+                    ligneOrganisateur.next();
+                    identite = ligneOrganisateur.getString("Prenom") +" "+ ligneOrganisateur.getString("Nom");
+                    nom = ligneOrganisateur.getString("Nom");
+                    prenom = ligneOrganisateur.getString("Prenom");
+                    adresse = ligneOrganisateur.getString("Adresse");
+                    telephone =  ligneOrganisateur.getString("Telephone");
+                    
+                    //récupération  de la table test pour remplir la combobox
+                    listeTest = bdd.getTest();
+                    while(listeTest.next()){
+                        nomTest = listeTest.getString("Nom");
+                        comboModel.addElement(nomTest);
+                    }
+                    //Si un échantillon est déjà associé à un test, le sélectionner dans la combobox
+                    ligneTestSelectionne = bdd.getLigneTestOrganisateur(idOrganisateur);
+                    while(ligneTestSelectionne.next()){
+                        TestSelectionne = ligneTestSelectionne.getString("Nom");
+                        comboModel.setSelectedItem(TestSelectionne);
+                    }
+                }
+                catch(SQLException ex){
+                    ex.printStackTrace();
+                }
+                organisateurSelectionne.setText(identite);
+                nomOrganisateur.setText(nom);
+                prenomOrganisateur.setText(prenom);
+                adresseOrganisateur.setText(adresse);
+                telephoneOrganisateur.setText(telephone);
+                testAssocieOrganisateur.setModel(comboModel);
+            }
+        };
+        listeOrganisateur.addListSelectionListener(listener);
+        
     }
     
     public void JListSalle(ResultSet rs){
         DefaultListModel modelSalle = new DefaultListModel();
         
         //variable pour stocker le résultat
-        String ligne; 
         try{
             while(rs.next()){
+                NomEtId nomEtId = new NomEtId();
                 //récupération pour chaque ligne du champ nom du tableau                
-                ligne = rs.getString("numero");
-                modelSalle.addElement(ligne);
+                nomEtId.nom = rs.getString("Numero");
+                nomEtId.id = rs.getInt("idSalle");
+                
+                modelSalle.addElement(nomEtId);
             }
         }
         catch(SQLException e){
             e.printStackTrace();
         }
         listeSalle.setModel(modelSalle);
+        
+        //Remplissage des champs voisins à la liste
+        //Création d'un listener pour pouvoir récupérer l'évènement
+        ListSelectionListener listener = new ListSelectionListener(){
+            @Override
+            //Besoin de valueChanged pour modifier l'évènement
+            public void valueChanged(ListSelectionEvent e) {
+                NomEtId nei = (NomEtId) listeSalle.getSelectedValue();
+                
+                //récupération de l'id correspondant au nom de l'échantillon
+                int idSalle = nei.id;
+                
+                //Récupération de la ligne correspondante à ce test dans la table
+                bdd = new BaseDeDonnees();
+                ResultSet ligneSalle = bdd.getLigneSalle(idSalle);
+                
+                String numero = "";
+                String batiment = "";
+                String dateOccupation = "";
+                int capaciteAccueil = 0;
+                
+                ResultSet listeTest;
+                ResultSet ligneTestSelectionne;
+                String TestSelectionne = "";
+                String nomTest = "";
+                DefaultComboBoxModel comboModel = new DefaultComboBoxModel();
+                
+                try{
+                    //Accès à la ligne de la table
+                    ligneSalle.next();
+                    numero = ligneSalle.getString("Numero");
+                    batiment = ligneSalle.getString("Batiment");
+                    dateOccupation = ligneSalle.getString("DateOccupation");
+                    capaciteAccueil = ligneSalle.getInt("CapaciteAccueil");
+                    
+                    //récupération  de la table test pour remplir la combobox
+                    listeTest = bdd.getTest();
+                    while(listeTest.next()){
+                        nomTest = listeTest.getString("Nom");
+                        comboModel.addElement(nomTest);
+                    }
+                    //Si un échantillon est déjà associé à un test, le sélectionner dans la combobox
+                    ligneTestSelectionne = bdd.getLigneTestSalle(idSalle);
+                    while(ligneTestSelectionne.next()){
+                        TestSelectionne = ligneTestSelectionne.getString("Nom");
+                        comboModel.setSelectedItem(TestSelectionne);
+                    }
+                }
+                catch(SQLException ex){
+                    ex.printStackTrace();
+                }
+                salleSelectionnee.setText(numero);
+                numeroSalle.setText(numero);
+                batimentSalle.setText(batiment);
+                dateSalle.setText(dateOccupation);
+                capaciteAccueilSalle.setText(String.valueOf(capaciteAccueil));
+                testAssocieSalle.setModel(comboModel);
+            }
+        };
+        listeSalle.addListSelectionListener(listener);
     }
     
     
@@ -170,6 +570,7 @@ public class Accueil extends javax.swing.JFrame {
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
+        bindingGroup = new org.jdesktop.beansbinding.BindingGroup();
 
         fenetre = new javax.swing.JTabbedPane();
         ongletTest = new javax.swing.JPanel();
@@ -180,16 +581,25 @@ public class Accueil extends javax.swing.JFrame {
         echantillonTest = new javax.swing.JTextField();
         organisateurTest = new javax.swing.JTextField();
         salleTest = new javax.swing.JTextField();
-        degustateur1Test = new javax.swing.JTextField();
-        degustateur2Test = new javax.swing.JTextField();
         syntheseNotes = new javax.swing.JTextField();
         resultatTest = new javax.swing.JTextField();
         enregistrerTest = new javax.swing.JButton();
         supprimerTest = new javax.swing.JButton();
         nouveauTest = new javax.swing.JButton();
+        jLabelResultatTest = new javax.swing.JLabel();
+        jLabelListeTest = new javax.swing.JLabel();
+        jLabelTestSelectionne = new javax.swing.JLabel();
+        jLabelSalleTest = new javax.swing.JLabel();
+        jLabelEchantillonTeste = new javax.swing.JLabel();
+        jLabelDateTest = new javax.swing.JLabel();
+        jLabelOrganisateurTest = new javax.swing.JLabel();
+        jLabelDegustateurTest1 = new javax.swing.JLabel();
+        jLabelSyntheseNoteTest = new javax.swing.JLabel();
+        cadreListeDegustateursTest = new javax.swing.JScrollPane();
+        listeDegustateursTest = new javax.swing.JList();
         ongletIngredient = new javax.swing.JPanel();
         cadreListeEchantillon = new javax.swing.JScrollPane();
-        listeIngredient = new javax.swing.JList();
+        listeEchantillon = new javax.swing.JList();
         echantillonSelectionne = new javax.swing.JTextField();
         marqueEchantillon = new javax.swing.JTextField();
         quantiteEchantillon = new javax.swing.JTextField();
@@ -197,6 +607,11 @@ public class Accueil extends javax.swing.JFrame {
         nouveauEchantillon = new javax.swing.JButton();
         enregistrerEchantillon = new javax.swing.JButton();
         supprimerEchantillon = new javax.swing.JButton();
+        jLabelEchantillonTestAssocie = new javax.swing.JLabel();
+        jLabelListeEchantillon = new javax.swing.JLabel();
+        jLabelQuantiteEchantillon = new javax.swing.JLabel();
+        jLabelMarqueEchantillon1 = new javax.swing.JLabel();
+        jLabelEchantillonSelectionne2 = new javax.swing.JLabel();
         ongletDegustateur = new javax.swing.JPanel();
         cadreListeDegustateur = new javax.swing.JScrollPane();
         listeDegustateur = new javax.swing.JList();
@@ -209,6 +624,12 @@ public class Accueil extends javax.swing.JFrame {
         enregistrerDegustateur = new javax.swing.JButton();
         supprimerDegustateur = new javax.swing.JButton();
         testAssocieDegustateur = new javax.swing.JComboBox();
+        jLabelListeDegustateur = new javax.swing.JLabel();
+        jLabelDegustateurSelectionne = new javax.swing.JLabel();
+        jLabelTelephoneDegustateur = new javax.swing.JLabel();
+        jLabelNomDegustateur = new javax.swing.JLabel();
+        jLabelPrenomDegustateur = new javax.swing.JLabel();
+        jLabelAdresseDegustateur = new javax.swing.JLabel();
         ongletOrganisateur = new javax.swing.JPanel();
         cadreListeOrganisateur = new javax.swing.JScrollPane();
         listeOrganisateur = new javax.swing.JList();
@@ -221,6 +642,12 @@ public class Accueil extends javax.swing.JFrame {
         adresseOrganisateur = new javax.swing.JTextField();
         telephoneOrganisateur = new javax.swing.JTextField();
         testAssocieOrganisateur = new javax.swing.JComboBox();
+        jLabelListeOrganisateur = new javax.swing.JLabel();
+        jLabelOrganisateurSelectionne = new javax.swing.JLabel();
+        jLabelNomOrganisateur = new javax.swing.JLabel();
+        jLabelPrenomOrganisateur = new javax.swing.JLabel();
+        jLabelAdresseOrganisateur = new javax.swing.JLabel();
+        jLabelTelephoneOrganisateur = new javax.swing.JLabel();
         ongletSalle = new javax.swing.JPanel();
         cadreListeSalle = new javax.swing.JScrollPane();
         listeSalle = new javax.swing.JList();
@@ -233,6 +660,12 @@ public class Accueil extends javax.swing.JFrame {
         enregistrerSalle = new javax.swing.JButton();
         supprimerSalle = new javax.swing.JButton();
         testAssocieSalle = new javax.swing.JComboBox();
+        jLabelListeSalle = new javax.swing.JLabel();
+        jLabelSalleSelectionnee = new javax.swing.JLabel();
+        jLabelNumeroSalle = new javax.swing.JLabel();
+        jLabelDateSalle = new javax.swing.JLabel();
+        jLabelNumeroSalle1 = new javax.swing.JLabel();
+        jLabelNumeroSalle2 = new javax.swing.JLabel();
         ongletNotes = new javax.swing.JPanel();
         apparenceNotes = new javax.swing.JTextField();
         odeurNotes = new javax.swing.JTextField();
@@ -246,10 +679,18 @@ public class Accueil extends javax.swing.JFrame {
         testAssocieNotes = new javax.swing.JComboBox();
         degustateurSelectionneNotes = new javax.swing.JComboBox();
         ingredientAssocieNotes = new javax.swing.JComboBox();
+        jLabelNumeroSalle3 = new javax.swing.JLabel();
+        jLabelNumeroSalle4 = new javax.swing.JLabel();
+        jLabelNumeroSalle5 = new javax.swing.JLabel();
+        jLabelNumeroSalle6 = new javax.swing.JLabel();
+        jLabelNumeroSalle7 = new javax.swing.JLabel();
+        jLabelNumeroSalle8 = new javax.swing.JLabel();
         titreBienvenue = new javax.swing.JLabel();
+        jLabel1 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Menu");
+        getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
         fenetre.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
 
@@ -263,7 +704,7 @@ public class Accueil extends javax.swing.JFrame {
         });
         cadreListeTest.setViewportView(listeTest);
 
-        ongletTest.add(cadreListeTest, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 104, 484));
+        ongletTest.add(cadreListeTest, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 30, 120, 510));
 
         testSelectionne.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         testSelectionne.setText("test sélectionné");
@@ -272,70 +713,58 @@ public class Accueil extends javax.swing.JFrame {
                 testSelectionneActionPerformed(evt);
             }
         });
-        ongletTest.add(testSelectionne, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 29, 537, 28));
+        ongletTest.add(testSelectionne, new org.netbeans.lib.awtextra.AbsoluteConstraints(170, 39, 537, 28));
 
-        dateTest.setEditable(false);
         dateTest.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        dateTest.setText("date du test");
         dateTest.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 dateTestActionPerformed(evt);
             }
         });
-        ongletTest.add(dateTest, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 97, 537, 28));
+        ongletTest.add(dateTest, new org.netbeans.lib.awtextra.AbsoluteConstraints(216, 87, 490, 28));
 
         echantillonTest.setEditable(false);
         echantillonTest.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        echantillonTest.setText("échantillon testé");
         echantillonTest.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 echantillonTestActionPerformed(evt);
             }
         });
-        ongletTest.add(echantillonTest, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 131, 537, 28));
+        ongletTest.add(echantillonTest, new org.netbeans.lib.awtextra.AbsoluteConstraints(277, 121, 430, 28));
 
         organisateurTest.setEditable(false);
         organisateurTest.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        organisateurTest.setText("organisateur du test");
-        ongletTest.add(organisateurTest, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 165, 537, 28));
+        organisateurTest.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                organisateurTestActionPerformed(evt);
+            }
+        });
+        ongletTest.add(organisateurTest, new org.netbeans.lib.awtextra.AbsoluteConstraints(257, 155, 450, 28));
 
         salleTest.setEditable(false);
         salleTest.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        salleTest.setText("date du test");
-        ongletTest.add(salleTest, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 199, 537, 28));
-
-        degustateur1Test.setEditable(false);
-        degustateur1Test.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        degustateur1Test.setText("dégustateur1 du test");
-        ongletTest.add(degustateur1Test, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 233, 537, 28));
-
-        degustateur2Test.setEditable(false);
-        degustateur2Test.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        degustateur2Test.setText("dégustateur2 du test");
-        degustateur2Test.addActionListener(new java.awt.event.ActionListener() {
+        salleTest.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                degustateur2TestActionPerformed(evt);
+                salleTestActionPerformed(evt);
             }
         });
-        ongletTest.add(degustateur2Test, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 267, 537, 28));
+        ongletTest.add(salleTest, new org.netbeans.lib.awtextra.AbsoluteConstraints(207, 189, 500, 28));
 
         syntheseNotes.setEditable(false);
         syntheseNotes.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        syntheseNotes.setText("synthèse des notes");
-        ongletTest.add(syntheseNotes, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 301, 537, 28));
+        ongletTest.add(syntheseNotes, new org.netbeans.lib.awtextra.AbsoluteConstraints(294, 410, 413, 28));
 
         resultatTest.setEditable(false);
         resultatTest.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        resultatTest.setText("résultat du test");
-        ongletTest.add(resultatTest, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 359, 537, 28));
+        ongletTest.add(resultatTest, new org.netbeans.lib.awtextra.AbsoluteConstraints(272, 444, 435, 28));
 
         enregistrerTest.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         enregistrerTest.setText("Enregistrer");
-        ongletTest.add(enregistrerTest, new org.netbeans.lib.awtextra.AbsoluteConstraints(360, 425, 100, 30));
+        ongletTest.add(enregistrerTest, new org.netbeans.lib.awtextra.AbsoluteConstraints(410, 500, 100, 30));
 
         supprimerTest.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         supprimerTest.setText("Supprimer");
-        ongletTest.add(supprimerTest, new org.netbeans.lib.awtextra.AbsoluteConstraints(520, 425, 100, 30));
+        ongletTest.add(supprimerTest, new org.netbeans.lib.awtextra.AbsoluteConstraints(570, 500, 100, 30));
 
         nouveauTest.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         nouveauTest.setText("Nouveau");
@@ -344,43 +773,85 @@ public class Accueil extends javax.swing.JFrame {
                 nouveauTestActionPerformed(evt);
             }
         });
-        ongletTest.add(nouveauTest, new org.netbeans.lib.awtextra.AbsoluteConstraints(200, 425, 100, 30));
+        ongletTest.add(nouveauTest, new org.netbeans.lib.awtextra.AbsoluteConstraints(250, 500, 100, 30));
+
+        jLabelResultatTest.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        jLabelResultatTest.setText("Résultat du test :");
+        ongletTest.add(jLabelResultatTest, new org.netbeans.lib.awtextra.AbsoluteConstraints(170, 444, -1, 28));
+
+        jLabelListeTest.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        jLabelListeTest.setText("Liste des tests : ");
+        ongletTest.add(jLabelListeTest, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 0, -1, 30));
+
+        jLabelTestSelectionne.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        jLabelTestSelectionne.setText("Test sélectionné : ");
+        ongletTest.add(jLabelTestSelectionne, new org.netbeans.lib.awtextra.AbsoluteConstraints(170, 10, 130, 28));
+
+        jLabelSalleTest.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        jLabelSalleTest.setText("Salle :");
+        ongletTest.add(jLabelSalleTest, new org.netbeans.lib.awtextra.AbsoluteConstraints(170, 189, -1, 28));
+
+        jLabelEchantillonTeste.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        jLabelEchantillonTeste.setText("Echantillon testé :");
+        ongletTest.add(jLabelEchantillonTeste, new org.netbeans.lib.awtextra.AbsoluteConstraints(170, 121, 100, 28));
+
+        jLabelDateTest.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        jLabelDateTest.setText("Date :");
+        ongletTest.add(jLabelDateTest, new org.netbeans.lib.awtextra.AbsoluteConstraints(170, 87, 40, 28));
+
+        jLabelOrganisateurTest.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        jLabelOrganisateurTest.setText("Organisateur :");
+        ongletTest.add(jLabelOrganisateurTest, new org.netbeans.lib.awtextra.AbsoluteConstraints(170, 155, 80, 28));
+
+        jLabelDegustateurTest1.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        jLabelDegustateurTest1.setText("Dégustateur :");
+        ongletTest.add(jLabelDegustateurTest1, new org.netbeans.lib.awtextra.AbsoluteConstraints(170, 223, 90, 28));
+
+        jLabelSyntheseNoteTest.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        jLabelSyntheseNoteTest.setText("Synthèse des notes :");
+        ongletTest.add(jLabelSyntheseNoteTest, new org.netbeans.lib.awtextra.AbsoluteConstraints(170, 410, 118, 28));
+
+        listeDegustateursTest.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        cadreListeDegustateursTest.setViewportView(listeDegustateursTest);
+
+        ongletTest.add(cadreListeDegustateursTest, new org.netbeans.lib.awtextra.AbsoluteConstraints(257, 223, 450, 180));
 
         fenetre.addTab("Test", ongletTest);
 
         ongletIngredient.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
-        listeIngredient.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        listeIngredient.setModel(new DefaultListModel()
+        listeEchantillon.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        listeEchantillon.setModel(new DefaultListModel()
         );
-        cadreListeEchantillon.setViewportView(listeIngredient);
+        cadreListeEchantillon.setViewportView(listeEchantillon);
 
-        ongletIngredient.add(cadreListeEchantillon, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 104, 484));
+        ongletIngredient.add(cadreListeEchantillon, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 30, 120, 510));
 
         echantillonSelectionne.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        echantillonSelectionne.setText("échantillon sélectionné");
         echantillonSelectionne.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 echantillonSelectionneActionPerformed(evt);
             }
         });
-        ongletIngredient.add(echantillonSelectionne, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 29, 537, 28));
+        ongletIngredient.add(echantillonSelectionne, new org.netbeans.lib.awtextra.AbsoluteConstraints(170, 39, 537, 28));
 
         marqueEchantillon.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        marqueEchantillon.setText("marque");
         marqueEchantillon.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 marqueEchantillonActionPerformed(evt);
             }
         });
-        ongletIngredient.add(marqueEchantillon, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 97, 537, 28));
+        ongletIngredient.add(marqueEchantillon, new org.netbeans.lib.awtextra.AbsoluteConstraints(226, 87, 481, 28));
 
         quantiteEchantillon.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        quantiteEchantillon.setText("quantité");
-        ongletIngredient.add(quantiteEchantillon, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 131, 537, 28));
+        ongletIngredient.add(quantiteEchantillon, new org.netbeans.lib.awtextra.AbsoluteConstraints(237, 131, 469, 28));
 
-        testAssocieEchantillon.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-        ongletIngredient.add(testAssocieEchantillon, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 349, 537, 28));
+        testAssocieEchantillon.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                testAssocieEchantillonActionPerformed(evt);
+            }
+        });
+        ongletIngredient.add(testAssocieEchantillon, new org.netbeans.lib.awtextra.AbsoluteConstraints(170, 349, 537, 28));
 
         nouveauEchantillon.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         nouveauEchantillon.setText("Nouveau");
@@ -389,59 +860,69 @@ public class Accueil extends javax.swing.JFrame {
                 nouveauEchantillonActionPerformed(evt);
             }
         });
-        ongletIngredient.add(nouveauEchantillon, new org.netbeans.lib.awtextra.AbsoluteConstraints(200, 425, 100, 30));
+        ongletIngredient.add(nouveauEchantillon, new org.netbeans.lib.awtextra.AbsoluteConstraints(250, 500, 100, 30));
 
         enregistrerEchantillon.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         enregistrerEchantillon.setText("Enregistrer");
-        ongletIngredient.add(enregistrerEchantillon, new org.netbeans.lib.awtextra.AbsoluteConstraints(360, 425, 100, 30));
+        ongletIngredient.add(enregistrerEchantillon, new org.netbeans.lib.awtextra.AbsoluteConstraints(410, 500, 100, 30));
 
         supprimerEchantillon.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         supprimerEchantillon.setText("Supprimer");
-        ongletIngredient.add(supprimerEchantillon, new org.netbeans.lib.awtextra.AbsoluteConstraints(520, 425, 100, 30));
+        ongletIngredient.add(supprimerEchantillon, new org.netbeans.lib.awtextra.AbsoluteConstraints(570, 500, 100, 30));
+
+        jLabelEchantillonTestAssocie.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        jLabelEchantillonTestAssocie.setText("Test associé : ");
+        ongletIngredient.add(jLabelEchantillonTestAssocie, new org.netbeans.lib.awtextra.AbsoluteConstraints(170, 315, 80, 28));
+
+        jLabelListeEchantillon.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        jLabelListeEchantillon.setText("Liste des échantillons : ");
+        ongletIngredient.add(jLabelListeEchantillon, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 0, -1, 30));
+
+        jLabelQuantiteEchantillon.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        jLabelQuantiteEchantillon.setText("Quantité : ");
+        ongletIngredient.add(jLabelQuantiteEchantillon, new org.netbeans.lib.awtextra.AbsoluteConstraints(170, 131, 60, 28));
+
+        jLabelMarqueEchantillon1.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        jLabelMarqueEchantillon1.setText("Marque :");
+        ongletIngredient.add(jLabelMarqueEchantillon1, new org.netbeans.lib.awtextra.AbsoluteConstraints(170, 87, 50, 28));
+
+        jLabelEchantillonSelectionne2.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        jLabelEchantillonSelectionne2.setText("Echantillon sélectionné : ");
+        ongletIngredient.add(jLabelEchantillonSelectionne2, new org.netbeans.lib.awtextra.AbsoluteConstraints(170, 10, 150, 28));
 
         fenetre.addTab("Echantillon", ongletIngredient);
 
         ongletDegustateur.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
         listeDegustateur.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        listeDegustateur.setModel(new javax.swing.AbstractListModel() {
-            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
-            public int getSize() { return strings.length; }
-            public Object getElementAt(int i) { return strings[i]; }
-        });
         cadreListeDegustateur.setViewportView(listeDegustateur);
 
-        ongletDegustateur.add(cadreListeDegustateur, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 104, 484));
+        ongletDegustateur.add(cadreListeDegustateur, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 30, 120, 510));
 
         degustateurSelectionne.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        degustateurSelectionne.setText("dégustateur sélectionné");
         degustateurSelectionne.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 degustateurSelectionneActionPerformed(evt);
             }
         });
-        ongletDegustateur.add(degustateurSelectionne, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 29, 537, 28));
+        ongletDegustateur.add(degustateurSelectionne, new org.netbeans.lib.awtextra.AbsoluteConstraints(170, 39, 537, 28));
 
         nomDegustateur.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        nomDegustateur.setText("nom du dégustateur");
         nomDegustateur.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 nomDegustateurActionPerformed(evt);
             }
         });
-        ongletDegustateur.add(nomDegustateur, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 97, 537, 28));
+        ongletDegustateur.add(nomDegustateur, new org.netbeans.lib.awtextra.AbsoluteConstraints(207, 97, 500, 28));
 
         prenomDegustateur.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        prenomDegustateur.setText("prénom du dégustateur");
-        ongletDegustateur.add(prenomDegustateur, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 131, 537, 28));
+        ongletDegustateur.add(prenomDegustateur, new org.netbeans.lib.awtextra.AbsoluteConstraints(227, 131, 480, 28));
 
         adresseDegustateur.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        adresseDegustateur.setText("adresse du dégustateur");
-        ongletDegustateur.add(adresseDegustateur, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 165, 537, 28));
+        ongletDegustateur.add(adresseDegustateur, new org.netbeans.lib.awtextra.AbsoluteConstraints(227, 165, 480, 28));
 
         telephoneDegustateur.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        telephoneDegustateur.setText("téléphone du dégustateur");
-        ongletDegustateur.add(telephoneDegustateur, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 199, 537, 28));
+        ongletDegustateur.add(telephoneDegustateur, new org.netbeans.lib.awtextra.AbsoluteConstraints(247, 199, 460, 28));
 
         nouveauDegustateur.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         nouveauDegustateur.setText("Nouveau");
@@ -450,41 +931,58 @@ public class Accueil extends javax.swing.JFrame {
                 nouveauDegustateurActionPerformed(evt);
             }
         });
-        ongletDegustateur.add(nouveauDegustateur, new org.netbeans.lib.awtextra.AbsoluteConstraints(200, 425, 100, 30));
+        ongletDegustateur.add(nouveauDegustateur, new org.netbeans.lib.awtextra.AbsoluteConstraints(250, 500, 100, 30));
 
         enregistrerDegustateur.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         enregistrerDegustateur.setText("Enregistrer");
-        ongletDegustateur.add(enregistrerDegustateur, new org.netbeans.lib.awtextra.AbsoluteConstraints(360, 425, 100, 30));
+        ongletDegustateur.add(enregistrerDegustateur, new org.netbeans.lib.awtextra.AbsoluteConstraints(410, 500, 100, 30));
 
         supprimerDegustateur.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         supprimerDegustateur.setText("Supprimer");
-        ongletDegustateur.add(supprimerDegustateur, new org.netbeans.lib.awtextra.AbsoluteConstraints(520, 425, 100, 30));
+        ongletDegustateur.add(supprimerDegustateur, new org.netbeans.lib.awtextra.AbsoluteConstraints(570, 500, 100, 30));
 
-        testAssocieDegustateur.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-        ongletDegustateur.add(testAssocieDegustateur, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 349, 537, 28));
+        ongletDegustateur.add(testAssocieDegustateur, new org.netbeans.lib.awtextra.AbsoluteConstraints(170, 349, 537, 28));
+
+        jLabelListeDegustateur.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        jLabelListeDegustateur.setText("Liste des dégustateurs : ");
+        ongletDegustateur.add(jLabelListeDegustateur, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 0, -1, 30));
+
+        jLabelDegustateurSelectionne.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        jLabelDegustateurSelectionne.setText("Dégustateur sélectionné : ");
+        ongletDegustateur.add(jLabelDegustateurSelectionne, new org.netbeans.lib.awtextra.AbsoluteConstraints(170, 10, 150, 28));
+
+        jLabelTelephoneDegustateur.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        jLabelTelephoneDegustateur.setText("Téléphone :");
+        ongletDegustateur.add(jLabelTelephoneDegustateur, new org.netbeans.lib.awtextra.AbsoluteConstraints(170, 199, 70, 28));
+
+        jLabelNomDegustateur.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        jLabelNomDegustateur.setText("Nom :");
+        ongletDegustateur.add(jLabelNomDegustateur, new org.netbeans.lib.awtextra.AbsoluteConstraints(170, 97, 40, 28));
+
+        jLabelPrenomDegustateur.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        jLabelPrenomDegustateur.setText("Prénom :");
+        ongletDegustateur.add(jLabelPrenomDegustateur, new org.netbeans.lib.awtextra.AbsoluteConstraints(170, 131, 60, 28));
+
+        jLabelAdresseDegustateur.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        jLabelAdresseDegustateur.setText("Adresse :");
+        ongletDegustateur.add(jLabelAdresseDegustateur, new org.netbeans.lib.awtextra.AbsoluteConstraints(170, 165, 60, 28));
 
         fenetre.addTab("Dégustateur", ongletDegustateur);
 
         ongletOrganisateur.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
         listeOrganisateur.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        listeOrganisateur.setModel(new javax.swing.AbstractListModel() {
-            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
-            public int getSize() { return strings.length; }
-            public Object getElementAt(int i) { return strings[i]; }
-        });
         cadreListeOrganisateur.setViewportView(listeOrganisateur);
 
-        ongletOrganisateur.add(cadreListeOrganisateur, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 104, 484));
+        ongletOrganisateur.add(cadreListeOrganisateur, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 30, 120, 510));
 
         organisateurSelectionne.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        organisateurSelectionne.setText("organisateur sélectionné");
         organisateurSelectionne.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 organisateurSelectionneActionPerformed(evt);
             }
         });
-        ongletOrganisateur.add(organisateurSelectionne, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 29, 537, 28));
+        ongletOrganisateur.add(organisateurSelectionne, new org.netbeans.lib.awtextra.AbsoluteConstraints(170, 39, 537, 28));
 
         nouveauOrganisateur.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         nouveauOrganisateur.setText("Nouveau");
@@ -493,39 +991,58 @@ public class Accueil extends javax.swing.JFrame {
                 nouveauOrganisateurActionPerformed(evt);
             }
         });
-        ongletOrganisateur.add(nouveauOrganisateur, new org.netbeans.lib.awtextra.AbsoluteConstraints(200, 425, 100, 30));
+        ongletOrganisateur.add(nouveauOrganisateur, new org.netbeans.lib.awtextra.AbsoluteConstraints(250, 500, 100, 30));
 
         enregistrerOrganisateur.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         enregistrerOrganisateur.setText("Enregistrer");
-        ongletOrganisateur.add(enregistrerOrganisateur, new org.netbeans.lib.awtextra.AbsoluteConstraints(360, 425, 100, 30));
+        ongletOrganisateur.add(enregistrerOrganisateur, new org.netbeans.lib.awtextra.AbsoluteConstraints(410, 500, 100, 30));
 
         supprimerOrganisateur.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         supprimerOrganisateur.setText("Supprimer");
-        ongletOrganisateur.add(supprimerOrganisateur, new org.netbeans.lib.awtextra.AbsoluteConstraints(520, 425, 100, 30));
+        ongletOrganisateur.add(supprimerOrganisateur, new org.netbeans.lib.awtextra.AbsoluteConstraints(570, 500, 100, 30));
 
         nomOrganisateur.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        nomOrganisateur.setText("nom de l'organisateur");
         nomOrganisateur.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 nomOrganisateurActionPerformed(evt);
             }
         });
-        ongletOrganisateur.add(nomOrganisateur, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 97, 537, 28));
+        ongletOrganisateur.add(nomOrganisateur, new org.netbeans.lib.awtextra.AbsoluteConstraints(207, 97, 500, 28));
 
         prenomOrganisateur.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        prenomOrganisateur.setText("prénom de l'organisateur");
-        ongletOrganisateur.add(prenomOrganisateur, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 131, 537, 28));
+        ongletOrganisateur.add(prenomOrganisateur, new org.netbeans.lib.awtextra.AbsoluteConstraints(227, 131, 480, 28));
 
         adresseOrganisateur.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        adresseOrganisateur.setText("adresse de l'organisateur");
-        ongletOrganisateur.add(adresseOrganisateur, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 165, 537, 28));
+        ongletOrganisateur.add(adresseOrganisateur, new org.netbeans.lib.awtextra.AbsoluteConstraints(227, 165, 480, 28));
 
         telephoneOrganisateur.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        telephoneOrganisateur.setText("téléphone de l'organisateur");
-        ongletOrganisateur.add(telephoneOrganisateur, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 199, 537, 28));
+        ongletOrganisateur.add(telephoneOrganisateur, new org.netbeans.lib.awtextra.AbsoluteConstraints(247, 199, 460, 28));
 
-        testAssocieOrganisateur.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-        ongletOrganisateur.add(testAssocieOrganisateur, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 349, 537, 28));
+        ongletOrganisateur.add(testAssocieOrganisateur, new org.netbeans.lib.awtextra.AbsoluteConstraints(170, 349, 537, 28));
+
+        jLabelListeOrganisateur.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        jLabelListeOrganisateur.setText("Liste des organisateurs : ");
+        ongletOrganisateur.add(jLabelListeOrganisateur, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 0, -1, 30));
+
+        jLabelOrganisateurSelectionne.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        jLabelOrganisateurSelectionne.setText("Organisateur sélectionné : ");
+        ongletOrganisateur.add(jLabelOrganisateurSelectionne, new org.netbeans.lib.awtextra.AbsoluteConstraints(170, 10, 150, 28));
+
+        jLabelNomOrganisateur.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        jLabelNomOrganisateur.setText("Nom :");
+        ongletOrganisateur.add(jLabelNomOrganisateur, new org.netbeans.lib.awtextra.AbsoluteConstraints(170, 97, 40, 28));
+
+        jLabelPrenomOrganisateur.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        jLabelPrenomOrganisateur.setText("Prénom :");
+        ongletOrganisateur.add(jLabelPrenomOrganisateur, new org.netbeans.lib.awtextra.AbsoluteConstraints(170, 131, 60, 28));
+
+        jLabelAdresseOrganisateur.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        jLabelAdresseOrganisateur.setText("Adresse :");
+        ongletOrganisateur.add(jLabelAdresseOrganisateur, new org.netbeans.lib.awtextra.AbsoluteConstraints(170, 165, 60, 28));
+
+        jLabelTelephoneOrganisateur.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        jLabelTelephoneOrganisateur.setText("Téléphone :");
+        ongletOrganisateur.add(jLabelTelephoneOrganisateur, new org.netbeans.lib.awtextra.AbsoluteConstraints(170, 199, 70, 28));
 
         fenetre.addTab("Organisateur", ongletOrganisateur);
 
@@ -539,7 +1056,7 @@ public class Accueil extends javax.swing.JFrame {
         });
         cadreListeSalle.setViewportView(listeSalle);
 
-        ongletSalle.add(cadreListeSalle, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 104, 484));
+        ongletSalle.add(cadreListeSalle, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 30, 120, 510));
 
         salleSelectionnee.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         salleSelectionnee.setText("salle sélectionnée");
@@ -548,28 +1065,24 @@ public class Accueil extends javax.swing.JFrame {
                 salleSelectionneeActionPerformed(evt);
             }
         });
-        ongletSalle.add(salleSelectionnee, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 29, 537, 28));
+        ongletSalle.add(salleSelectionnee, new org.netbeans.lib.awtextra.AbsoluteConstraints(170, 39, 537, 28));
 
         numeroSalle.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        numeroSalle.setText("numéro de la salle");
         numeroSalle.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 numeroSalleActionPerformed(evt);
             }
         });
-        ongletSalle.add(numeroSalle, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 97, 537, 28));
+        ongletSalle.add(numeroSalle, new org.netbeans.lib.awtextra.AbsoluteConstraints(227, 97, 480, 28));
 
         batimentSalle.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        batimentSalle.setText("bâtiment de la salle");
-        ongletSalle.add(batimentSalle, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 131, 537, 28));
+        ongletSalle.add(batimentSalle, new org.netbeans.lib.awtextra.AbsoluteConstraints(234, 131, 473, 28));
 
         dateSalle.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        dateSalle.setText("date de la salle");
-        ongletSalle.add(dateSalle, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 165, 537, 28));
+        ongletSalle.add(dateSalle, new org.netbeans.lib.awtextra.AbsoluteConstraints(210, 165, 497, 28));
 
         capaciteAccueilSalle.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        capaciteAccueilSalle.setText("capacité d'accueil de la salle");
-        ongletSalle.add(capaciteAccueilSalle, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 199, 537, 28));
+        ongletSalle.add(capaciteAccueilSalle, new org.netbeans.lib.awtextra.AbsoluteConstraints(280, 199, 427, 28));
 
         nouveauSalle.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         nouveauSalle.setText("Nouveau");
@@ -578,26 +1091,48 @@ public class Accueil extends javax.swing.JFrame {
                 nouveauSalleActionPerformed(evt);
             }
         });
-        ongletSalle.add(nouveauSalle, new org.netbeans.lib.awtextra.AbsoluteConstraints(200, 425, 100, 30));
+        ongletSalle.add(nouveauSalle, new org.netbeans.lib.awtextra.AbsoluteConstraints(250, 500, 100, 30));
 
         enregistrerSalle.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         enregistrerSalle.setText("Enregistrer");
-        ongletSalle.add(enregistrerSalle, new org.netbeans.lib.awtextra.AbsoluteConstraints(360, 425, 100, 30));
+        ongletSalle.add(enregistrerSalle, new org.netbeans.lib.awtextra.AbsoluteConstraints(410, 500, 100, 30));
 
         supprimerSalle.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         supprimerSalle.setText("Supprimer");
-        ongletSalle.add(supprimerSalle, new org.netbeans.lib.awtextra.AbsoluteConstraints(520, 425, 100, 30));
+        ongletSalle.add(supprimerSalle, new org.netbeans.lib.awtextra.AbsoluteConstraints(570, 500, 100, 30));
 
-        testAssocieSalle.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-        ongletSalle.add(testAssocieSalle, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 349, 537, 28));
+        ongletSalle.add(testAssocieSalle, new org.netbeans.lib.awtextra.AbsoluteConstraints(170, 349, 537, 28));
+
+        jLabelListeSalle.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        jLabelListeSalle.setText("Liste des salles : ");
+        ongletSalle.add(jLabelListeSalle, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 0, -1, 30));
+
+        jLabelSalleSelectionnee.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        jLabelSalleSelectionnee.setText("Salle sélectionnée : ");
+        ongletSalle.add(jLabelSalleSelectionnee, new org.netbeans.lib.awtextra.AbsoluteConstraints(170, 10, 150, 28));
+
+        jLabelNumeroSalle.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        jLabelNumeroSalle.setText("Capacité d'accueil :");
+        ongletSalle.add(jLabelNumeroSalle, new org.netbeans.lib.awtextra.AbsoluteConstraints(170, 199, 110, 28));
+
+        jLabelDateSalle.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        jLabelDateSalle.setText("Date :");
+        ongletSalle.add(jLabelDateSalle, new org.netbeans.lib.awtextra.AbsoluteConstraints(170, 165, 40, 28));
+
+        jLabelNumeroSalle1.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        jLabelNumeroSalle1.setText("Numéro :");
+        ongletSalle.add(jLabelNumeroSalle1, new org.netbeans.lib.awtextra.AbsoluteConstraints(170, 97, 60, 28));
+
+        jLabelNumeroSalle2.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        jLabelNumeroSalle2.setText("Bâtiment :");
+        ongletSalle.add(jLabelNumeroSalle2, new org.netbeans.lib.awtextra.AbsoluteConstraints(170, 131, 60, 28));
 
         fenetre.addTab("Salle", ongletSalle);
 
         ongletNotes.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
         apparenceNotes.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        apparenceNotes.setText("apparence");
-        ongletNotes.add(apparenceNotes, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 165, 537, 28));
+        ongletNotes.add(apparenceNotes, new org.netbeans.lib.awtextra.AbsoluteConstraints(167, 165, 510, 28));
 
         odeurNotes.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         odeurNotes.setText("odeur");
@@ -605,7 +1140,7 @@ public class Accueil extends javax.swing.JFrame {
 
         goutNotes.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         goutNotes.setText("goût");
-        ongletNotes.add(goutNotes, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 233, 537, 28));
+        ongletNotes.add(goutNotes, new org.netbeans.lib.awtextra.AbsoluteConstraints(134, 233, 543, 28));
 
         textureNotes.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         textureNotes.setText("texture");
@@ -614,15 +1149,15 @@ public class Accueil extends javax.swing.JFrame {
                 textureNotesActionPerformed(evt);
             }
         });
-        ongletNotes.add(textureNotes, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 267, 537, 28));
+        ongletNotes.add(textureNotes, new org.netbeans.lib.awtextra.AbsoluteConstraints(150, 267, 527, 28));
 
         commentaireNotes.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         commentaireNotes.setText("commentaire");
-        ongletNotes.add(commentaireNotes, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 301, 537, 28));
+        ongletNotes.add(commentaireNotes, new org.netbeans.lib.awtextra.AbsoluteConstraints(178, 301, 499, 28));
 
         resultatFinalNotes.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         resultatFinalNotes.setText("résultat final");
-        ongletNotes.add(resultatFinalNotes, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 359, 537, 28));
+        ongletNotes.add(resultatFinalNotes, new org.netbeans.lib.awtextra.AbsoluteConstraints(177, 359, 500, 28));
 
         nouveauNotes.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         nouveauNotes.setText("Nouveau");
@@ -631,52 +1166,68 @@ public class Accueil extends javax.swing.JFrame {
                 nouveauNotesActionPerformed(evt);
             }
         });
-        ongletNotes.add(nouveauNotes, new org.netbeans.lib.awtextra.AbsoluteConstraints(200, 425, 100, 30));
+        ongletNotes.add(nouveauNotes, new org.netbeans.lib.awtextra.AbsoluteConstraints(200, 450, 100, 30));
 
         enregistrerNotes.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         enregistrerNotes.setText("Enregistrer");
-        ongletNotes.add(enregistrerNotes, new org.netbeans.lib.awtextra.AbsoluteConstraints(360, 425, 100, 30));
+        ongletNotes.add(enregistrerNotes, new org.netbeans.lib.awtextra.AbsoluteConstraints(360, 450, 100, 30));
 
         supprimerNotes.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         supprimerNotes.setText("Supprimer");
-        ongletNotes.add(supprimerNotes, new org.netbeans.lib.awtextra.AbsoluteConstraints(520, 425, 100, 30));
+        ongletNotes.add(supprimerNotes, new org.netbeans.lib.awtextra.AbsoluteConstraints(520, 450, 100, 30));
 
         testAssocieNotes.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-        ongletNotes.add(testAssocieNotes, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 93, 537, 28));
+        ongletNotes.add(testAssocieNotes, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 93, 577, 28));
 
         degustateurSelectionneNotes.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-        ongletNotes.add(degustateurSelectionneNotes, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 25, 537, 28));
+        ongletNotes.add(degustateurSelectionneNotes, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 25, 577, 28));
 
         ingredientAssocieNotes.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-        ongletNotes.add(ingredientAssocieNotes, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 59, 537, 28));
+        ongletNotes.add(ingredientAssocieNotes, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 59, 577, 28));
+
+        jLabelNumeroSalle3.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        jLabelNumeroSalle3.setText("Goût :");
+        ongletNotes.add(jLabelNumeroSalle3, new org.netbeans.lib.awtextra.AbsoluteConstraints(92, 233, 40, 28));
+
+        jLabelNumeroSalle4.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        jLabelNumeroSalle4.setText("Résultat Final :");
+        ongletNotes.add(jLabelNumeroSalle4, new org.netbeans.lib.awtextra.AbsoluteConstraints(92, 359, 80, 28));
+
+        jLabelNumeroSalle5.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        jLabelNumeroSalle5.setText("Texture :");
+        ongletNotes.add(jLabelNumeroSalle5, new org.netbeans.lib.awtextra.AbsoluteConstraints(92, 267, 60, 28));
+
+        jLabelNumeroSalle6.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        jLabelNumeroSalle6.setText("Odeur :");
+        ongletNotes.add(jLabelNumeroSalle6, new org.netbeans.lib.awtextra.AbsoluteConstraints(92, 199, 50, 28));
+
+        jLabelNumeroSalle7.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        jLabelNumeroSalle7.setText("Apparence :");
+        ongletNotes.add(jLabelNumeroSalle7, new org.netbeans.lib.awtextra.AbsoluteConstraints(92, 165, 70, 28));
+
+        jLabelNumeroSalle8.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        jLabelNumeroSalle8.setText("Commentaire :");
+        ongletNotes.add(jLabelNumeroSalle8, new org.netbeans.lib.awtextra.AbsoluteConstraints(92, 301, 80, 28));
 
         fenetre.addTab("Notes", ongletNotes);
 
-        titreBienvenue.setFont(new java.awt.Font("Tahoma", 0, 24)); // NOI18N
-        titreBienvenue.setForeground(new java.awt.Color(255, 102, 0));
-        titreBienvenue.setText("Bienvenue sur l'application d'évaluation des ingrédients !");
+        getContentPane().add(fenetre, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 70, 760, 580));
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addGap(112, 112, 112)
-                .addComponent(titreBienvenue, javax.swing.GroupLayout.PREFERRED_SIZE, 618, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(fenetre)
-                .addContainerGap())
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addGap(11, 11, 11)
-                .addComponent(titreBienvenue, javax.swing.GroupLayout.PREFERRED_SIZE, 55, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(6, 6, 6)
-                .addComponent(fenetre, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-        );
+        titreBienvenue.setFont(new java.awt.Font("Tahoma", 0, 24)); // NOI18N
+        titreBienvenue.setForeground(new java.awt.Color(51, 0, 0));
+        titreBienvenue.setText("Application d'évaluation des ingrédients");
+        getContentPane().add(titreBienvenue, new org.netbeans.lib.awtextra.AbsoluteConstraints(240, 10, -1, 47));
+
+        jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/clientlourdnesti/LogoNesti2.png"))); // NOI18N
+        jLabel1.setPreferredSize(new java.awt.Dimension(678, 281));
+
+        org.jdesktop.beansbinding.Binding binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, jLabel1, org.jdesktop.beansbinding.ELProperty.create("${icon}"), jLabel1, org.jdesktop.beansbinding.BeanProperty.create("icon"), "LogoNesti");
+        binding.setSourceNullValue(null);
+        bindingGroup.addBinding(binding);
+
+        getContentPane().add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 8, 120, 50));
+
+        bindingGroup.bind();
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -688,10 +1239,6 @@ public class Accueil extends javax.swing.JFrame {
     private void dateTestActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_dateTestActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_dateTestActionPerformed
-
-    private void degustateur2TestActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_degustateur2TestActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_degustateur2TestActionPerformed
 
     private void echantillonSelectionneActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_echantillonSelectionneActionPerformed
         // TODO add your handling code here:
@@ -758,12 +1305,25 @@ public class Accueil extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_echantillonTestActionPerformed
 
+    private void salleTestActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_salleTestActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_salleTestActionPerformed
+
+    private void organisateurTestActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_organisateurTestActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_organisateurTestActionPerformed
+
+    private void testAssocieEchantillonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_testAssocieEchantillonActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_testAssocieEchantillonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField adresseDegustateur;
     private javax.swing.JTextField adresseOrganisateur;
     private javax.swing.JTextField apparenceNotes;
     private javax.swing.JTextField batimentSalle;
     private javax.swing.JScrollPane cadreListeDegustateur;
+    private javax.swing.JScrollPane cadreListeDegustateursTest;
     private javax.swing.JScrollPane cadreListeEchantillon;
     private javax.swing.JScrollPane cadreListeOrganisateur;
     private javax.swing.JScrollPane cadreListeSalle;
@@ -772,8 +1332,6 @@ public class Accueil extends javax.swing.JFrame {
     private javax.swing.JTextField commentaireNotes;
     private javax.swing.JTextField dateSalle;
     private javax.swing.JTextField dateTest;
-    private javax.swing.JTextField degustateur1Test;
-    private javax.swing.JTextField degustateur2Test;
     private javax.swing.JTextField degustateurSelectionne;
     private javax.swing.JComboBox degustateurSelectionneNotes;
     private javax.swing.JTextField echantillonSelectionne;
@@ -787,8 +1345,48 @@ public class Accueil extends javax.swing.JFrame {
     private javax.swing.JTabbedPane fenetre;
     private javax.swing.JTextField goutNotes;
     private javax.swing.JComboBox ingredientAssocieNotes;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabelAdresseDegustateur;
+    private javax.swing.JLabel jLabelAdresseOrganisateur;
+    private javax.swing.JLabel jLabelDateSalle;
+    private javax.swing.JLabel jLabelDateTest;
+    private javax.swing.JLabel jLabelDegustateurSelectionne;
+    private javax.swing.JLabel jLabelDegustateurTest1;
+    private javax.swing.JLabel jLabelEchantillonSelectionne2;
+    private javax.swing.JLabel jLabelEchantillonTestAssocie;
+    private javax.swing.JLabel jLabelEchantillonTeste;
+    private javax.swing.JLabel jLabelListeDegustateur;
+    private javax.swing.JLabel jLabelListeEchantillon;
+    private javax.swing.JLabel jLabelListeOrganisateur;
+    private javax.swing.JLabel jLabelListeSalle;
+    private javax.swing.JLabel jLabelListeTest;
+    private javax.swing.JLabel jLabelMarqueEchantillon1;
+    private javax.swing.JLabel jLabelNomDegustateur;
+    private javax.swing.JLabel jLabelNomOrganisateur;
+    private javax.swing.JLabel jLabelNumeroSalle;
+    private javax.swing.JLabel jLabelNumeroSalle1;
+    private javax.swing.JLabel jLabelNumeroSalle2;
+    private javax.swing.JLabel jLabelNumeroSalle3;
+    private javax.swing.JLabel jLabelNumeroSalle4;
+    private javax.swing.JLabel jLabelNumeroSalle5;
+    private javax.swing.JLabel jLabelNumeroSalle6;
+    private javax.swing.JLabel jLabelNumeroSalle7;
+    private javax.swing.JLabel jLabelNumeroSalle8;
+    private javax.swing.JLabel jLabelOrganisateurSelectionne;
+    private javax.swing.JLabel jLabelOrganisateurTest;
+    private javax.swing.JLabel jLabelPrenomDegustateur;
+    private javax.swing.JLabel jLabelPrenomOrganisateur;
+    private javax.swing.JLabel jLabelQuantiteEchantillon;
+    private javax.swing.JLabel jLabelResultatTest;
+    private javax.swing.JLabel jLabelSalleSelectionnee;
+    private javax.swing.JLabel jLabelSalleTest;
+    private javax.swing.JLabel jLabelSyntheseNoteTest;
+    private javax.swing.JLabel jLabelTelephoneDegustateur;
+    private javax.swing.JLabel jLabelTelephoneOrganisateur;
+    private javax.swing.JLabel jLabelTestSelectionne;
     private javax.swing.JList listeDegustateur;
-    private javax.swing.JList listeIngredient;
+    private javax.swing.JList listeDegustateursTest;
+    private javax.swing.JList listeEchantillon;
     private javax.swing.JList listeOrganisateur;
     private javax.swing.JList listeSalle;
     private javax.swing.JList listeTest;
@@ -835,5 +1433,6 @@ public class Accueil extends javax.swing.JFrame {
     private javax.swing.JTextField testSelectionne;
     private javax.swing.JTextField textureNotes;
     private javax.swing.JLabel titreBienvenue;
+    private org.jdesktop.beansbinding.BindingGroup bindingGroup;
     // End of variables declaration//GEN-END:variables
 }
