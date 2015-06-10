@@ -163,23 +163,72 @@ public class BaseDeDonnees {
         
         return resSet;
     }
-    public ResultSet setLigneModifierTest(int id,String nom, String date){
+    
+    public void setLigneModifierTest(int id,String nom, String date){
         String sql = "UPDATE test "
                 + " SET Nom='"+nom+"',DateTest='"+date+"'"
                 + " WHERE idTest="+id;
         
         //Envoi et exécution de la requête
         ResultSet resSet = connexion.envoiRequete(sql);
-        
-        return resSet;
     }
-    public ResultSet supprimerTest(int id){
+    
+    public void supprimerTest(int id){
         String sql = "Delete FROM test WHERE idTest="+id;
         
         //Envoi et exécution de la requête
         ResultSet resSet = connexion.envoiRequete(sql);
+    }
+    
+    public int setLigneNouveauEchantillon(String nom, String marque, int quantite){
+        String sql = "INSERT INTO echantillon (Nom,Marque,Quantite)"
+                + " VALUES ('"+nom+"','"+marque+"',"+quantite+")";
+        String sql2 = "SELECT LAST_INSERT_ID()";
+
+        //Envoi et exécution de la requête
+        ResultSet resSet = connexion.envoiRequete(sql);
+        ResultSet resSet2 = connexion.envoiRequete(sql2);
         
-        return resSet;
+        try{
+            return resSet2.getInt(1);
+        }catch(Exception e)
+        {
+            return -1;
+        }
+    }
+    
+    public void setLigneModifierEchantillon(int id, String nom, String marque, int quantite){
+        String sql = "UPDATE echantillon "
+                + " SET Nom='"+nom+"',Marque='"+marque+"',Quantite="+quantite
+                + " WHERE idEchantillon="+id;
+        
+        //Envoi et exécution de la requête
+        ResultSet resSet = connexion.envoiRequete(sql);
+    }
+    
+    public void associeTestEchantillon(int idTest, int idEchantillon){
+        String sql = "UPDATE test "
+                + " SET Echantillon_idEchantillon='"+idEchantillon+"'"
+                + " WHERE idTest="+idTest;
+        
+        //Envoi et exécution de la requête
+        ResultSet resSet = connexion.envoiRequete(sql);
+    }
+    
+    public void supprimerEchantillon(int idEchantillon){
+        //Supression du lien entre Echantillon et Test
+        String sqlTest = "UPDATE test "
+                + " SET Echantillon_idEchantillon=NULL"
+                + " WHERE Echantillon_idEchantillon="+idEchantillon;
+        
+        //Envoi et exécution de la requête
+        ResultSet resSetT = connexion.envoiRequete(sqlTest);
+
+        //Suppression de l'échantillon dans la table Echantillon
+        String sqlEchantillon = "DELETE FROM echantillon WHERE idEchantillon="+idEchantillon;
+        
+        //Envoi et exécution de la requête
+        ResultSet resSetE = connexion.envoiRequete(sqlEchantillon);
     }
 }
 
