@@ -153,6 +153,34 @@ public class BaseDeDonnees {
         
         return resSet;
     }
+    
+    public ResultSet setLigneNouveauTest(String nom, String date){
+        String sql = "INSERT INTO test (Nom,DateTest)"
+                + " VALUES ('"+nom+"','"+date+"')";
+        
+        //Envoi et exécution de la requête
+        ResultSet resSet = connexion.envoiRequete(sql);
+        
+        return resSet;
+    }
+    public ResultSet setLigneModifierTest(int id,String nom, String date){
+        String sql = "UPDATE test "
+                + " SET Nom='"+nom+"',DateTest='"+date+"'"
+                + " WHERE idTest="+id;
+        
+        //Envoi et exécution de la requête
+        ResultSet resSet = connexion.envoiRequete(sql);
+        
+        return resSet;
+    }
+    public ResultSet supprimerTest(int id){
+        String sql = "Delete FROM test WHERE idTest="+id;
+        
+        //Envoi et exécution de la requête
+        ResultSet resSet = connexion.envoiRequete(sql);
+        
+        return resSet;
+    }
 }
 
     

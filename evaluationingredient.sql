@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Client :  127.0.0.1
--- Généré le :  Jeu 04 Juin 2015 à 15:15
+-- Généré le :  Mer 10 Juin 2015 à 14:54
 -- Version du serveur :  5.6.15-log
 -- Version de PHP :  5.5.8
 
@@ -66,7 +66,7 @@ CREATE TABLE IF NOT EXISTS `echantillon` (
 --
 
 INSERT INTO `echantillon` (`idEchantillon`, `Nom`, `Marque`, `Quantite`) VALUES
-(1, 'ChocolatNoir', 'Cote d''Os', 10),
+(1, 'Chocolat noir', 'Cote d''Os', 10),
 (2, 'Chocolat blanc', 'Mont bleu', 5),
 (3, 'Café', 'Grand maman', 0),
 (4, 'thé vert', 'Détonne', 0),
@@ -97,7 +97,9 @@ CREATE TABLE IF NOT EXISTS `note` (
 --
 
 INSERT INTO `note` (`Echantillon_idEchantillon`, `Degustateur_idDegustateur`, `Aspect`, `Gout`, `Odeur`, `Texture`, `Commentaire`) VALUES
-(1, 2, 5, 2, 3, 4, 'trop dure à croquer');
+(1, 1, 5, 5, 5, 5, 'top!'),
+(1, 2, 5, 2, 3, 4, 'trop dure à croquer'),
+(1, 3, 2, 3, 2, 5, 'bof');
 
 -- --------------------------------------------------------
 
@@ -146,7 +148,11 @@ CREATE TABLE IF NOT EXISTS `participe` (
 
 INSERT INTO `participe` (`Degustateur_idDegustateur`, `Test_idTest`) VALUES
 (1, 1),
-(2, 1);
+(2, 1),
+(3, 1),
+(2, 2),
+(3, 2),
+(4, 2);
 
 -- --------------------------------------------------------
 
@@ -185,21 +191,23 @@ CREATE TABLE IF NOT EXISTS `test` (
   `idTest` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `Nom` varchar(45) NOT NULL,
   `DateTest` date NOT NULL,
-  `Echantillon_idEchantillon` int(10) unsigned NOT NULL,
-  `Salle_idSalle` int(10) unsigned NOT NULL,
-  `Organisateur_idOrganisateur` int(10) unsigned NOT NULL,
+  `Echantillon_idEchantillon` int(10) unsigned DEFAULT NULL,
+  `Salle_idSalle` int(10) unsigned DEFAULT NULL,
+  `Organisateur_idOrganisateur` int(10) unsigned DEFAULT NULL,
   PRIMARY KEY (`idTest`),
   KEY `fk_Test_Echantillon1_idx` (`Echantillon_idEchantillon`),
   KEY `fk_Test_Salle1_idx` (`Salle_idSalle`),
   KEY `fk_Test_Preparateur1_idx` (`Organisateur_idOrganisateur`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=2 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=5 ;
 
 --
 -- Contenu de la table `test`
 --
 
 INSERT INTO `test` (`idTest`, `Nom`, `DateTest`, `Echantillon_idEchantillon`, `Salle_idSalle`, `Organisateur_idOrganisateur`) VALUES
-(1, 'TestChocolatNoir', '2015-05-12', 1, 1, 1);
+(1, 'Test Chocolat noir', '2015-05-12', 1, 1, 1),
+(2, 'Test Glace à la fraise', '2015-06-10', 5, 2, 3),
+(3, 'Test Café', '2015-06-05', 3, 1, 5);
 
 --
 -- Contraintes pour les tables exportées

@@ -40,10 +40,9 @@ public class Accueil extends javax.swing.JFrame {
         //Appel des données de la base
         bdd = new BaseDeDonnees();
 
-        //Récupération de la liste
-        ResultSet rsTest = bdd.getListe("Test");
+        
         //Affichage dans la fenêtre Test
-        JListTest(rsTest);
+        JListTest();
         // Fermeture de la requête
         bdd.finRequeteBdd();
         
@@ -97,8 +96,10 @@ public class Accueil extends javax.swing.JFrame {
             return nom +" "+ prenom;     
         }
     }
-    
-    public void JListTest(ResultSet rs){
+    public void RemplirJListTest(){
+        //Récupération de la liste
+        ResultSet rs = bdd.getListe("Test");
+        
         //Remplisage de la liste
         DefaultListModel modelTest = new DefaultListModel();
         
@@ -117,6 +118,10 @@ public class Accueil extends javax.swing.JFrame {
             e.printStackTrace();
         }
         listeTest.setModel(modelTest);
+    }
+    
+    public void JListTest(){
+        RemplirJListTest();
         
         //Remplissage des champs voisins à la liste
         //Création d'un listener pour pouvoir récupérer l'évènement
@@ -126,9 +131,12 @@ public class Accueil extends javax.swing.JFrame {
             //Besoin de valueChanged pour modifier l'évènement
             public void valueChanged(ListSelectionEvent e) {
                 NomEtId nei = (NomEtId) listeTest.getSelectedValue();
+                //Si rien n'est sélectionné
+                if(nei == null){
+                    return;
+                }
                 //récupération de l'id correspondant au nom du test
                 int idTest = nei.id;
-                
                 //Récupération de la ligne correspondante à ce test dans la table
                 bdd = new BaseDeDonnees();
                 ResultSet ligneTest = bdd.getLigneTest(idTest);
@@ -173,18 +181,20 @@ public class Accueil extends javax.swing.JFrame {
                     
                     idEchantillon = ligneTest.getInt("Echantillon_idEchantillon");
                     ligneEchantillon = bdd.getLigneEchantillon(idEchantillon);
-                    ligneEchantillon.next();
-                    nomEchantillon = ligneEchantillon.getString("Nom") +" "+ ligneEchantillon.getString("Marque");
+                    if(ligneEchantillon.next()){
+                        nomEchantillon = ligneEchantillon.getString("Nom") +" "+ ligneEchantillon.getString("Marque");
+                    }
                     
                     idOrganisateur = ligneTest.getInt("Organisateur_idOrganisateur");        
                     ligneOrganisateur = bdd.getLigneOrganisateur(idOrganisateur);
-                    ligneOrganisateur.next();
-                    nomOrganisateur = ligneOrganisateur.getString("Prenom") +" "+ ligneOrganisateur.getString("Nom");
-                    
+                    if(ligneOrganisateur.next()){
+                        nomOrganisateur = ligneOrganisateur.getString("Prenom") +" "+ ligneOrganisateur.getString("Nom");
+                    }
                     idSalle = ligneTest.getInt("Salle_idSalle");   
                     ligneSalle = bdd.getLigneSalle(idSalle);
-                    ligneSalle.next();
-                    nomSalle = ligneSalle.getString("Numero");
+                    if (ligneSalle.next()){
+                        nomSalle = ligneSalle.getString("Numero");
+                    }
                     
                     //tant qu'un dégustateur est associé au test
                     while(ligneDegustateurParticipeTest.next()){
@@ -265,6 +275,10 @@ public class Accueil extends javax.swing.JFrame {
             //Besoin de valueChanged pour modifier l'évènement
             public void valueChanged(ListSelectionEvent e) {
                 NomEtId nei = (NomEtId) listeEchantillon.getSelectedValue();
+                //Si rien n'est sélectionné
+                if(nei == null){
+                    return;
+                }
                 
                 //récupération de l'id correspondant au nom de l'échantillon
                 int idEchantillon = nei.id;
@@ -341,7 +355,10 @@ public class Accueil extends javax.swing.JFrame {
             //Besoin de valueChanged pour modifier l'évènement
             public void valueChanged(ListSelectionEvent e){
             Identite ident = (Identite) listeDegustateur.getSelectedValue();
-                
+                //Si rien n'est sélectionné
+                if(ident == null){
+                    return;
+                }
                 //récupération de l'id correspondant au nom de l'échantillon
                 int idDegustateur = ident.id;
                 
@@ -424,7 +441,10 @@ public class Accueil extends javax.swing.JFrame {
             //Besoin de valueChanged pour modifier l'évènement
             public void valueChanged(ListSelectionEvent e){
             Identite ident = (Identite) listeOrganisateur.getSelectedValue();
-                
+                //Si rien n'est sélectionné
+                if(ident == null){
+                    return;
+                }
                 //récupération de l'id correspondant au nom de l'échantillon
                 int idOrganisateur = ident.id;
                 
@@ -507,7 +527,10 @@ public class Accueil extends javax.swing.JFrame {
             //Besoin de valueChanged pour modifier l'évènement
             public void valueChanged(ListSelectionEvent e) {
                 NomEtId nei = (NomEtId) listeSalle.getSelectedValue();
-                
+                //Si rien n'est sélectionné
+                if(nei == null){
+                    return;
+                }
                 //récupération de l'id correspondant au nom de l'échantillon
                 int idSalle = nei.id;
                 
@@ -697,17 +720,11 @@ public class Accueil extends javax.swing.JFrame {
         ongletTest.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
         listeTest.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        listeTest.setModel(new javax.swing.AbstractListModel() {
-            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
-            public int getSize() { return strings.length; }
-            public Object getElementAt(int i) { return strings[i]; }
-        });
         cadreListeTest.setViewportView(listeTest);
 
         ongletTest.add(cadreListeTest, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 30, 120, 510));
 
         testSelectionne.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        testSelectionne.setText("test sélectionné");
         testSelectionne.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 testSelectionneActionPerformed(evt);
@@ -760,10 +777,20 @@ public class Accueil extends javax.swing.JFrame {
 
         enregistrerTest.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         enregistrerTest.setText("Enregistrer");
+        enregistrerTest.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                enregistrerTestActionPerformed(evt);
+            }
+        });
         ongletTest.add(enregistrerTest, new org.netbeans.lib.awtextra.AbsoluteConstraints(410, 500, 100, 30));
 
         supprimerTest.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         supprimerTest.setText("Supprimer");
+        supprimerTest.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                supprimerTestActionPerformed(evt);
+            }
+        });
         ongletTest.add(supprimerTest, new org.netbeans.lib.awtextra.AbsoluteConstraints(570, 500, 100, 30));
 
         nouveauTest.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
@@ -1049,17 +1076,11 @@ public class Accueil extends javax.swing.JFrame {
         ongletSalle.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
         listeSalle.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        listeSalle.setModel(new javax.swing.AbstractListModel() {
-            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
-            public int getSize() { return strings.length; }
-            public Object getElementAt(int i) { return strings[i]; }
-        });
         cadreListeSalle.setViewportView(listeSalle);
 
         ongletSalle.add(cadreListeSalle, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 30, 120, 510));
 
         salleSelectionnee.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        salleSelectionnee.setText("salle sélectionnée");
         salleSelectionnee.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 salleSelectionneeActionPerformed(evt);
@@ -1274,27 +1295,58 @@ public class Accueil extends javax.swing.JFrame {
     }//GEN-LAST:event_textureNotesActionPerformed
 
     private void nouveauTestActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nouveauTestActionPerformed
-        // TODO add your handling code here:
+        listeTest.clearSelection();
+        testSelectionne.setText("");
+        dateTest.setText("");
+        echantillonTest.setText("");
+        organisateurTest.setText("");
+        salleTest.setText("");
+        listeDegustateursTest.setListData(new Object[0]);
+        syntheseNotes.setText("");
+        resultatTest.setText("");
     }//GEN-LAST:event_nouveauTestActionPerformed
 
     private void nouveauEchantillonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nouveauEchantillonActionPerformed
-        // TODO add your handling code here:
+        listeEchantillon.clearSelection();
+        echantillonSelectionne.setText("");
+        marqueEchantillon.setText("");
+        quantiteEchantillon.setText("");
+        testAssocieEchantillon.removeAllItems();
     }//GEN-LAST:event_nouveauEchantillonActionPerformed
 
     private void nouveauDegustateurActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nouveauDegustateurActionPerformed
-        // TODO add your handling code here:
+        listeDegustateur.clearSelection();
+        degustateurSelectionne.setText("");
+        nomDegustateur.setText("");
+        prenomDegustateur.setText("");
+        adresseDegustateur.setText("");
+        telephoneDegustateur.setText("");
+        testAssocieDegustateur.removeAllItems();
     }//GEN-LAST:event_nouveauDegustateurActionPerformed
 
     private void nouveauOrganisateurActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nouveauOrganisateurActionPerformed
-        // TODO add your handling code here:
+        listeOrganisateur.clearSelection();
+        organisateurSelectionne.setText("");
+        nomOrganisateur.setText("");
+        prenomOrganisateur.setText("");
+        adresseOrganisateur.setText("");
+        telephoneOrganisateur.setText("");
+        testAssocieOrganisateur.removeAllItems();
     }//GEN-LAST:event_nouveauOrganisateurActionPerformed
 
     private void nouveauSalleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nouveauSalleActionPerformed
-        // TODO add your handling code here:
+        listeSalle.clearSelection();
+        salleSelectionnee.setText("");
+        numeroSalle.setText("");
+        batimentSalle.setText("");
+        dateSalle.setText("");
+        capaciteAccueilSalle.setText("");
+        testAssocieSalle.removeAllItems();
     }//GEN-LAST:event_nouveauSalleActionPerformed
 
     private void nouveauNotesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nouveauNotesActionPerformed
         // TODO add your handling code here:
+        
     }//GEN-LAST:event_nouveauNotesActionPerformed
 
     private void nomOrganisateurActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nomOrganisateurActionPerformed
@@ -1316,6 +1368,45 @@ public class Accueil extends javax.swing.JFrame {
     private void testAssocieEchantillonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_testAssocieEchantillonActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_testAssocieEchantillonActionPerformed
+
+    private void enregistrerTestActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_enregistrerTestActionPerformed
+        //récupération des données des champs
+        String nom = testSelectionne.getText();
+        String date = dateTest.getText();
+        
+        //Envoi de la bonne requête suivant le cas
+        bdd = new BaseDeDonnees();
+        ResultSet Test;
+        
+        if(listeTest.isSelectionEmpty()){
+            Test = bdd.setLigneNouveauTest(nom, date);
+        }
+        else{
+            //récupération de l'id pour un test sélectionné
+            int index = listeTest.getSelectedIndex();
+            NomEtId nei = new NomEtId();
+            nei = (NomEtId) listeTest.getModel().getElementAt(index);
+            int id = nei.id;
+        
+            Test = bdd.setLigneModifierTest(id, nom, date);
+        }
+        RemplirJListTest();
+        
+    }//GEN-LAST:event_enregistrerTestActionPerformed
+
+    private void supprimerTestActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_supprimerTestActionPerformed
+        //récupération de l'id pour un test sélectionné
+        ResultSet Test; 
+        if(listeTest.isSelectionEmpty() == false){    
+            int index = listeTest.getSelectedIndex();
+            NomEtId nei = new NomEtId();
+            nei = (NomEtId) listeTest.getModel().getElementAt(index);
+            int id = nei.id;
+        
+            Test = bdd.supprimerTest(id);
+        }
+        RemplirJListTest();
+    }//GEN-LAST:event_supprimerTestActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField adresseDegustateur;
