@@ -154,14 +154,22 @@ public class BaseDeDonnees {
         return resSet;
     }
     
-    public ResultSet setLigneNouveauTest(String nom, String date){
+    public int setLigneNouveauTest(String nom, String date){
         String sql = "INSERT INTO test (Nom,DateTest)"
                 + " VALUES ('"+nom+"','"+date+"')";
         
         //Envoi et exécution de la requête
-        ResultSet resSet = connexion.envoiRequete(sql);
+        connexion.envoiRequete(sql);
         
-        return resSet;
+        ResultSet resSet = connexion.envoiRequete("SELECT LAST_INSERT_ID()");
+        
+        try{
+            resSet.next();
+            return resSet.getInt(1);
+        }catch(Exception e)
+        {
+            return 0;
+        }
     }
     
     public void setLigneModifierTest(int id,String nom, String date){
@@ -189,11 +197,13 @@ public class BaseDeDonnees {
         ResultSet resSet = connexion.envoiRequete(sql);
         ResultSet resSet2 = connexion.envoiRequete(sql2);
         
+        
         try{
+            resSet2.next();
             return resSet2.getInt(1);
         }catch(Exception e)
         {
-            return -1;
+            return 0;
         }
     }
     
@@ -229,6 +239,38 @@ public class BaseDeDonnees {
         
         //Envoi et exécution de la requête
         ResultSet resSetE = connexion.envoiRequete(sqlEchantillon);
+    }
+    public int setLigneNouveauDegustateur(String nom, String prenom, String adresse, String telephone){
+        String sql = "INSERT INTO degustateur (Nom,Prenom,Adresse,Telephone)"
+                + " VALUES ('"+nom+"','"+prenom+"','"+adresse+"','"+telephone+"')";
+        String sql2 = "SELECT LAST_INSERT_ID()";
+
+        //Envoi et exécution de la requête
+        ResultSet resSet = connexion.envoiRequete(sql);
+        ResultSet resSet2 = connexion.envoiRequete(sql2);
+        
+        try{
+            resSet2.next();
+            return resSet2.getInt(1);
+        }catch(Exception e)
+        {
+            return 0;
+        }
+    }
+    public void setLigneModifierDegustateur(int idDegustateur, String nom, String prenom, String adresse, String telephone){
+        String sql = "UPDATE degustateur "
+                + " SET Nom='"+nom+"',Prenom='"+prenom+"',Adresse='"+adresse+"',Telephone='"+telephone+"'"
+                + " WHERE idDegustateur="+idDegustateur;
+        
+        //Envoi et exécution de la requête
+        ResultSet resSet = connexion.envoiRequete(sql);
+    }
+    public void associeTestDegustateur(int idTest, int idDegustateur){
+        String sql = "INSERT INTO participe (Degustateur_idDegustateur,Test_idTest)"
+                + " VALUES ("+idDegustateur+","+idTest+")";
+        
+        //Envoi et exécution de la requête
+        ResultSet resSet = connexion.envoiRequete(sql);
     }
 }
 
