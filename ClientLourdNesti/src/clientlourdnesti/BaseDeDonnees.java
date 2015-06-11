@@ -218,7 +218,7 @@ public class BaseDeDonnees {
     
     public void associeTestEchantillon(int idTest, int idEchantillon){
         String sql = "UPDATE test "
-                + " SET Echantillon_idEchantillon='"+idEchantillon+"'"
+                + " SET Echantillon_idEchantillon="+idEchantillon
                 + " WHERE idTest="+idTest;
         
         //Envoi et exécution de la requête
@@ -266,8 +266,124 @@ public class BaseDeDonnees {
         ResultSet resSet = connexion.envoiRequete(sql);
     }
     public void associeTestDegustateur(int idTest, int idDegustateur){
-        String sql = "INSERT INTO participe (Degustateur_idDegustateur,Test_idTest)"
+        String sql = "INSERT IGNORE INTO participe (Degustateur_idDegustateur,Test_idTest)"
                 + " VALUES ("+idDegustateur+","+idTest+")";
+        
+        //Envoi et exécution de la requête
+        ResultSet resSet = connexion.envoiRequete(sql);
+    }
+    
+    public void supprimerDegustateur(int idDegustateur){
+        //Supression du lien entre Echantillon et Test
+        String sqlParticipe = "DELETE FROM participe"
+                + " WHERE Degustateur_idDegustateur="+idDegustateur;
+        
+        //Envoi et exécution de la requête
+        ResultSet resSetT = connexion.envoiRequete(sqlParticipe);
+
+        //Suppression de l'échantillon dans la table Echantillon
+        String sqlDegustateur = "DELETE FROM degustateur WHERE idDegustateur="+idDegustateur;
+        
+        //Envoi et exécution de la requête
+        ResultSet resSetE = connexion.envoiRequete(sqlDegustateur);
+    }
+    
+    public int setLigneNouveauOrganisateur(String nom,String prenom,String adresse,String telephone){
+        String sql = "INSERT INTO organisateur (Nom,Prenom,Adresse,Telephone)"
+                + " VALUES ('"+nom+"','"+prenom+"','"+adresse+"','"+telephone+"')";
+        String sql2 = "SELECT LAST_INSERT_ID()";
+
+        //Envoi et exécution de la requête
+        ResultSet resSet = connexion.envoiRequete(sql);
+        ResultSet resSet2 = connexion.envoiRequete(sql2);
+
+        try{
+            resSet2.next();
+            return resSet2.getInt(1);
+        }catch(Exception e)
+        {
+            return 0;
+        }
+    }
+    public void setLigneModifierOrganisateur(int currentID,String nom,String prenom,String adresse,String telephone){
+        String sql = "UPDATE organisateur "
+                + " SET Nom='"+nom+"',Prenom='"+prenom+"',Adresse='"+adresse+"',Telephone='"+telephone+"'"
+                + " WHERE idOrganisateur="+currentID;
+        
+        //Envoi et exécution de la requête
+        ResultSet resSet = connexion.envoiRequete(sql);
+    }
+    
+    public void associeTestOrganisateur(int idTest, int idOrganisateur){
+        String sql = "UPDATE test "
+                + " SET Organisateur_idOrganisateur="+idOrganisateur
+                + " WHERE idTest="+idTest;
+        
+        //Envoi et exécution de la requête
+        ResultSet resSet = connexion.envoiRequete(sql);
+    }
+            
+    public void supprimerOrganisateur(int idOrganisateur){
+        //Supression du lien entre Organisateur et Test
+        String sqlTest = "UPDATE test "
+                + " SET Organisateur_idOrganisateur=NULL"
+                + " WHERE Organisateur_idOrganisateur="+idOrganisateur;
+        
+        //Envoi et exécution de la requête
+        ResultSet resSetT = connexion.envoiRequete(sqlTest);
+
+        //Suppression de l'Organisateur dans la table Organisateur
+        String sqlOrganisateur = "DELETE FROM Organisateur WHERE idOrganisateur="+idOrganisateur;
+        
+        //Envoi et exécution de la requête
+        ResultSet resSetE = connexion.envoiRequete(sqlOrganisateur);
+    }
+    public void supprimerSalle(int idSalle){
+        //Supression du lien entre Organisateur et Test
+        String sqlTest = "UPDATE test "
+                + " SET Salle_idSalle=NULL"
+                + " WHERE Salle_idSalle="+idSalle;
+        
+        //Envoi et exécution de la requête
+        ResultSet resSetT = connexion.envoiRequete(sqlTest);
+
+        //Suppression de l'Organisateur dans la table Organisateur
+        String sqlSalle = "DELETE FROM Salle WHERE idSalle="+idSalle;
+        
+        //Envoi et exécution de la requête
+        ResultSet resSetE = connexion.envoiRequete(sqlSalle);
+    }
+    public int setLigneNouveauSalle(String numero,String batiment,String date,int capaciteDAccueil){
+        String sql = "INSERT INTO salle (Numero,Batiment,DateOccupation,CapaciteAccueil)"
+                + " VALUES ('"+numero+"','"+batiment+"','"+date+"',"+capaciteDAccueil+")";
+        String sql2 = "SELECT LAST_INSERT_ID()";
+
+        //Envoi et exécution de la requête
+        ResultSet resSet = connexion.envoiRequete(sql);
+        ResultSet resSet2 = connexion.envoiRequete(sql2);
+
+        try{
+            resSet2.next();
+            return resSet2.getInt(1);
+        }catch(Exception e)
+        {
+            return 0;
+        }
+    }
+    
+    public void setLigneModifierSalle(int currentID,String numero,String batiment,String date,int capaciteDAccueil){
+        String sql = "UPDATE salle"
+                + " SET Numero='"+numero+"',Batiment='"+batiment+"',DateOccupation='"+date+"',CapaciteAccueil="+capaciteDAccueil
+                + " WHERE idSalle="+currentID;
+        
+        //Envoi et exécution de la requête
+        ResultSet resSet = connexion.envoiRequete(sql);
+    }
+
+    public void associeTestSalle(int idTest, int idSalle){
+        String sql = "UPDATE test "
+                + " SET Salle_idSalle="+idSalle
+                + " WHERE idTest="+idTest;
         
         //Envoi et exécution de la requête
         ResultSet resSet = connexion.envoiRequete(sql);

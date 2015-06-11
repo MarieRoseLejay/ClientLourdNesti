@@ -504,8 +504,10 @@ public class Accueil extends javax.swing.JFrame {
                     //récupération  de la table test pour remplir la combobox
                     listeTest = bdd.getTest();
                     while(listeTest.next()){
-                        nomTest = listeTest.getString("Nom");
-                        comboModel.addElement(nomTest);
+                        NomEtId nei = new NomEtId();
+                        nei.nom = listeTest.getString("Nom");
+                        nei.id = listeTest.getInt("idTest");
+                        comboModel.addElement(nei);
                     }
                     //Si un échantillon est déjà associé à un test, le sélectionner dans la combobox
                     ligneTestSelectionne = bdd.getLigneTestOrganisateur(idOrganisateur);
@@ -595,8 +597,10 @@ public class Accueil extends javax.swing.JFrame {
                     //récupération  de la table test pour remplir la combobox
                     listeTest = bdd.getTest();
                     while(listeTest.next()){
-                        nomTest = listeTest.getString("Nom");
-                        comboModel.addElement(nomTest);
+                        NomEtId neiS = new NomEtId();
+                        neiS.nom = listeTest.getString("Nom");
+                        neiS.id = listeTest.getInt("idTest");
+                        comboModel.addElement(neiS);
                     }
                     //Si un échantillon est déjà associé à un test, le sélectionner dans la combobox
                     ligneTestSelectionne = bdd.getLigneTestSalle(idSalle);
@@ -1017,6 +1021,11 @@ public class Accueil extends javax.swing.JFrame {
 
         supprimerDegustateur.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         supprimerDegustateur.setText("Supprimer");
+        supprimerDegustateur.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                supprimerDegustateurActionPerformed(evt);
+            }
+        });
         ongletDegustateur.add(supprimerDegustateur, new org.netbeans.lib.awtextra.AbsoluteConstraints(570, 500, 100, 30));
 
         ongletDegustateur.add(testAssocieDegustateur, new org.netbeans.lib.awtextra.AbsoluteConstraints(170, 349, 537, 28));
@@ -1083,6 +1092,11 @@ public class Accueil extends javax.swing.JFrame {
 
         supprimerOrganisateur.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         supprimerOrganisateur.setText("Supprimer");
+        supprimerOrganisateur.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                supprimerOrganisateurActionPerformed(evt);
+            }
+        });
         ongletOrganisateur.add(supprimerOrganisateur, new org.netbeans.lib.awtextra.AbsoluteConstraints(570, 500, 100, 30));
 
         nomOrganisateur.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
@@ -1174,10 +1188,20 @@ public class Accueil extends javax.swing.JFrame {
 
         enregistrerSalle.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         enregistrerSalle.setText("Enregistrer");
+        enregistrerSalle.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                enregistrerSalleActionPerformed(evt);
+            }
+        });
         ongletSalle.add(enregistrerSalle, new org.netbeans.lib.awtextra.AbsoluteConstraints(410, 500, 100, 30));
 
         supprimerSalle.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         supprimerSalle.setText("Supprimer");
+        supprimerSalle.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                supprimerSalleActionPerformed(evt);
+            }
+        });
         ongletSalle.add(supprimerSalle, new org.netbeans.lib.awtextra.AbsoluteConstraints(570, 500, 100, 30));
 
         ongletSalle.add(testAssocieSalle, new org.netbeans.lib.awtextra.AbsoluteConstraints(170, 349, 537, 28));
@@ -1297,7 +1321,6 @@ public class Accueil extends javax.swing.JFrame {
         titreBienvenue.setText("Application d'évaluation des ingrédients");
         getContentPane().add(titreBienvenue, new org.netbeans.lib.awtextra.AbsoluteConstraints(240, 10, -1, 47));
 
-        jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/clientlourdnesti/LogoNesti2.png"))); // NOI18N
         jLabel1.setPreferredSize(new java.awt.Dimension(678, 281));
 
         org.jdesktop.beansbinding.Binding binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, jLabel1, org.jdesktop.beansbinding.ELProperty.create("${icon}"), jLabel1, org.jdesktop.beansbinding.BeanProperty.create("icon"), "LogoNesti");
@@ -1353,9 +1376,9 @@ public class Accueil extends javax.swing.JFrame {
     }//GEN-LAST:event_textureNotesActionPerformed
 
     private void nouveauTestActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nouveauTestActionPerformed
+        listeTest.clearSelection();
         nouveau = true;
         currentID = 0;
-        listeTest.clearSelection();
         testSelectionne.setText("");
         dateTest.setText("");
         echantillonTest.setText("");
@@ -1367,9 +1390,9 @@ public class Accueil extends javax.swing.JFrame {
     }//GEN-LAST:event_nouveauTestActionPerformed
 
     private void nouveauEchantillonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nouveauEchantillonActionPerformed
+        listeEchantillon.clearSelection();
         nouveau = true;
         currentID = 0;
-        listeEchantillon.clearSelection();
         echantillonSelectionne.setText("");
         marqueEchantillon.setText("");
         quantiteEchantillon.setText("");
@@ -1377,9 +1400,9 @@ public class Accueil extends javax.swing.JFrame {
     }//GEN-LAST:event_nouveauEchantillonActionPerformed
 
     private void nouveauDegustateurActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nouveauDegustateurActionPerformed
+        listeDegustateur.clearSelection();
         nouveau = true;
         currentID = 0;
-        listeDegustateur.clearSelection();
         degustateurSelectionne.setText("");
         nomDegustateur.setText("");
         prenomDegustateur.setText("");
@@ -1389,9 +1412,9 @@ public class Accueil extends javax.swing.JFrame {
     }//GEN-LAST:event_nouveauDegustateurActionPerformed
 
     private void nouveauOrganisateurActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nouveauOrganisateurActionPerformed
+        listeOrganisateur.clearSelection();
         nouveau = true;
         currentID = 0;        
-        listeOrganisateur.clearSelection();
         organisateurSelectionne.setText("");
         nomOrganisateur.setText("");
         prenomOrganisateur.setText("");
@@ -1401,9 +1424,9 @@ public class Accueil extends javax.swing.JFrame {
     }//GEN-LAST:event_nouveauOrganisateurActionPerformed
 
     private void nouveauSalleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nouveauSalleActionPerformed
+        listeSalle.clearSelection();
         nouveau = true;
         currentID = 0;        
-        listeSalle.clearSelection();
         salleSelectionnee.setText("");
         numeroSalle.setText("");
         batimentSalle.setText("");
@@ -1460,14 +1483,8 @@ public class Accueil extends javax.swing.JFrame {
 
     private void supprimerTestActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_supprimerTestActionPerformed
         //récupération de l'id pour un test sélectionné
-        ResultSet Test; 
-        if(listeTest.isSelectionEmpty() == false){    
-            int index = listeTest.getSelectedIndex();
-            NomEtId nei = new NomEtId();
-            nei = (NomEtId) listeTest.getModel().getElementAt(index);
-            int id = nei.id;
-        
-            bdd.supprimerTest(id);
+        if(currentID != 0){    
+            bdd.supprimerTest(currentID);
         }
         RemplirJListTest();
     }//GEN-LAST:event_supprimerTestActionPerformed
@@ -1485,9 +1502,7 @@ public class Accueil extends javax.swing.JFrame {
             NomEtId nei = (NomEtId) testAssocieEchantillon.getItemAt(index);
             idTest = nei.id;
         }
-        
-        //récupération de l'id de l'échantillon sélectionné
-        int indexEchantillon = listeEchantillon.getSelectedIndex();
+
         //Envoi de la bonne requête suivant le cas
         bdd = new BaseDeDonnees();
         
@@ -1514,20 +1529,9 @@ public class Accueil extends javax.swing.JFrame {
     }//GEN-LAST:event_enregistrerEchantillonActionPerformed
 
     private void supprimerEchantillonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_supprimerEchantillonActionPerformed
-        //récupération de l'id pour un Echantillon sélectionné
-        ResultSet Echantillon; 
         //Si un échantillon est sélectionné
-        if(listeEchantillon.isSelectionEmpty() == false){    
-            int idTest = 0;
-            int index = testAssocieEchantillon.getSelectedIndex();
-           
-            //récupération de l'id de l'échantillon sélectionné
-            int indexE = listeEchantillon.getSelectedIndex();
-            NomEtId nei = new NomEtId();
-            nei = (NomEtId) listeEchantillon.getModel().getElementAt(indexE);
-            int idEchantillon = nei.id;
-        
-            bdd.supprimerEchantillon(idEchantillon);
+        if(currentID != 0){    
+            bdd.supprimerEchantillon(currentID);
         }
         RemplirJListEchantillon();
     }//GEN-LAST:event_supprimerEchantillonActionPerformed
@@ -1547,8 +1551,6 @@ public class Accueil extends javax.swing.JFrame {
             idTest = neiT.id;
         }
         
-        //récupération de l'id du degustateur sélectionné
-        int indexDegustateur = listeDegustateur.getSelectedIndex();
         //Envoi de la bonne requête suivant le cas
         bdd = new BaseDeDonnees();
         
@@ -1576,8 +1578,111 @@ public class Accueil extends javax.swing.JFrame {
     }//GEN-LAST:event_enregistrerDegustateurActionPerformed
 
     private void enregistrerOrganisateurActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_enregistrerOrganisateurActionPerformed
-        // TODO add your handling code here:
+        //récupération des données des champs
+        String nom = nomOrganisateur.getText();
+        String prenom = prenomOrganisateur.getText();
+        String adresse = adresseOrganisateur.getText();
+        String telephone = telephoneOrganisateur.getText();
+        
+        //récupération de l'id du test sélectionné
+        int idTest = 0;
+        int index = testAssocieOrganisateur.getSelectedIndex();
+        if(testAssocieOrganisateur.getSelectedIndex() != -1){
+            NomEtId nei = (NomEtId) testAssocieOrganisateur.getItemAt(index);
+            idTest = nei.id;
+        }
+        
+        //Envoi de la bonne requête suivant le cas
+        bdd = new BaseDeDonnees();
+        
+        if(nouveau){
+            //création de l'échantillon
+            currentID = bdd.setLigneNouveauOrganisateur(nom,prenom,adresse,telephone);
+            nouveau = false;
+            
+            //si un test est sélectionné
+            if(testAssocieOrganisateur.getSelectedIndex() != -1){
+                bdd.associeTestOrganisateur(idTest,currentID);
+                bdd.finRequeteBdd();
+            }
+        }
+        else{
+            bdd.setLigneModifierOrganisateur(currentID,nom,prenom,adresse,telephone);
+            //si un test est sélectionné
+            if(testAssocieOrganisateur.getSelectedIndex() != -1){
+                bdd.associeTestOrganisateur(idTest,currentID);
+                bdd.finRequeteBdd();
+            }
+        }
+        RemplirJListOrganisateur();
     }//GEN-LAST:event_enregistrerOrganisateurActionPerformed
+
+    private void supprimerDegustateurActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_supprimerDegustateurActionPerformed
+        //Si un échantillon est sélectionné
+        if(currentID != 0){    
+            bdd.supprimerDegustateur(currentID);
+        }
+        RemplirJListDegustateur();
+    }//GEN-LAST:event_supprimerDegustateurActionPerformed
+
+    private void supprimerOrganisateurActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_supprimerOrganisateurActionPerformed
+        //Si un Organisateur est sélectionné
+        if(currentID != 0){    
+            bdd.supprimerOrganisateur(currentID);
+        }
+        RemplirJListOrganisateur();
+
+    }//GEN-LAST:event_supprimerOrganisateurActionPerformed
+
+    private void supprimerSalleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_supprimerSalleActionPerformed
+        //Si un Organisateur est sélectionné
+        if(currentID != 0){    
+            bdd.supprimerSalle(currentID);
+        }
+        RemplirJListSalle();
+
+    }//GEN-LAST:event_supprimerSalleActionPerformed
+
+    private void enregistrerSalleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_enregistrerSalleActionPerformed
+        //récupération des données des champs
+        String numero = numeroSalle.getText();
+        String batiment = batimentSalle.getText();
+        String date = dateSalle.getText();
+        int capaciteDAccueil = Integer.valueOf(capaciteAccueilSalle.getText());
+        
+        //récupération de l'id du test sélectionné
+        int idTest = 0;
+        int index = testAssocieSalle.getSelectedIndex();
+        if(testAssocieSalle.getSelectedIndex() != -1){
+            NomEtId nei = (NomEtId) testAssocieSalle.getItemAt(index);
+            idTest = nei.id;
+        }
+        
+        //Envoi de la bonne requête suivant le cas
+        bdd = new BaseDeDonnees();
+        
+        if(nouveau){
+            //création de l'échantillon
+            currentID = bdd.setLigneNouveauSalle(numero,batiment,date,capaciteDAccueil);
+            nouveau = false;
+            
+            //si un test est sélectionné
+            if(testAssocieSalle.getSelectedIndex() != -1){
+                bdd.associeTestSalle(idTest,currentID);
+                bdd.finRequeteBdd();
+            }
+        }
+        else{
+            bdd.setLigneModifierSalle(currentID,numero,batiment,date,capaciteDAccueil);
+            //si un test est sélectionné
+            if(testAssocieSalle.getSelectedIndex() != -1){
+                bdd.associeTestSalle(idTest,currentID);
+                bdd.finRequeteBdd();
+            }
+        }
+        RemplirJListSalle();
+
+    }//GEN-LAST:event_enregistrerSalleActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField adresseDegustateur;
